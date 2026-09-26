@@ -1,0 +1,20 @@
+# Private planning docs (journal only, not for the public repo)
+cloud-clock-scaling.md
+day-1-plan.md
+
+# Device certs / keys — never commit
+certs/
+*.pem
+*.key
+*.crt
+
+# PlatformIO
+.pio/
+
+# Python
+__pycache__/
+.venv/
+
+# CDK / Node
+node_modules/
+cdk.out/

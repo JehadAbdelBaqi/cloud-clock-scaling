@@ -1,0 +1,29 @@
+[project]
+name = "cloud-clock-scaling"
+version = "0.1.0"
+description = "STM32 clock speed driven from AWS IoT — CDK infra, Lambda, serial<->MQTT gateway"
+requires-python = ">=3.12"
+dependencies = []
+
+# One venv for the whole repo. Groups split by part of the project;
+# all are installed by default (`uv sync`).
+[dependency-groups]
+infra = [
+    "aws-cdk-lib>=2.270.0,<3.0.0",
+    "constructs>=10.5.0,<11.0.0",
+]
+gateway = [
+    "awsiotsdk",
+    "pyserial",
+]
+dev = [
+    "pytest",
+    "boto3",  # built into the Lambda runtime; needed locally for tests
+]
+
+[tool.uv]
+package = false
+default-groups = ["infra", "gateway", "dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["infra/tests", "lambda/tests", "gateway/tests"]
