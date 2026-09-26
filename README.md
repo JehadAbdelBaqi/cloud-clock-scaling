@@ -142,7 +142,7 @@ Connections), fill `githubRepo` (`owner/repo`) and `connectionArn` in
 cdk deploy ClockScalePipelineStack
 ```
 
-After that, every push to `main` tests, synths and deploys.
+After that, every push to `master` tests, synths and deploys.
 
 ### Settings (`infra/cdk.json` → `context`)
 

@@ -50,7 +50,7 @@ if connection_arn:
         app,
         "ClockScalePipelineStack",
         github_repo=ctx("githubRepo"),
-        github_branch=ctx("githubBranch") or "main",
+        github_branch=ctx("githubBranch") or "master",
         connection_arn=connection_arn,
         settings=settings,
         build_firmware=bool(ctx("buildFirmware")),

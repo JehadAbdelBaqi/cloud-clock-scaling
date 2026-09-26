@@ -22,7 +22,7 @@
     "maxLevel": 1,
     "holdSeconds": 15,
     "githubRepo": "",
-    "githubBranch": "main",
+    "githubBranch": "master",
     "connectionArn": "",
     "buildFirmware": false,
     "@aws-cdk-containers/ecs-service-extensions:enableDefaultLogDriver": true,
