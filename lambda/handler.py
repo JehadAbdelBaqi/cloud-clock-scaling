@@ -1,6 +1,10 @@
 """Decision Lambda — invoked by the IoT topic rule for every reading.
 
-reading -> pick clock level -> (if above LOW) publish command -> log to DynamoDB
+reading -> pick clock level -> (if above LOW) publish command -> log one line
+
+The command is published first: that's the fast path the board is waiting
+on. The log line comes after and goes to CloudWatch Logs, which is the
+reading history (query it with Logs Insights).
 
 LOW is never sent: dropping back to low speed is the board's own job (its
 hold timer), so it still gets there if the cloud or network is down.
@@ -17,20 +21,15 @@ from levels import CLOCK_MHZ, LOW, build_command, parse_reading, pick_level
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
-HISTORY_TTL_S = 7 * 24 * 3600  # readings auto-expire after a week
-
-_table = None
 _iot = None
 
 
-def _clients():
+def _iot_client():
     """Created lazily so the module imports cleanly in unit tests."""
-    global _table, _iot
-    if _table is None:
-        _table = boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"])
+    global _iot
     if _iot is None:
         _iot = boto3.client("iot-data", endpoint_url=f"https://{os.environ['IOT_ENDPOINT']}")
-    return _table, _iot
+    return _iot
 
 
 def _settings() -> dict:
@@ -55,27 +54,12 @@ def handler(event, context):
         return {"status": "dropped", "reason": str(exc)}
 
     level = pick_level(reading["peak"], cfg["med"], cfg["high"], cfg["max_level"])
-    table, iot = _clients()
 
     command = None
     if level > LOW:
         command = build_command(reading["seq"], level, cfg["hold_s"])
         topic = f"{cfg['topic_root']}/{reading['device_id']}/commands"
-        iot.publish(topic=topic, qos=1, payload=json.dumps(command))
-
-    table.put_item(
-        Item={
-            "device_id": reading["device_id"],
-            "ts": reading["ts"] or received_ms,
-            "seq": reading["seq"],
-            "peak": reading["peak"],
-            "level": level,
-            "mhz": CLOCK_MHZ[level],
-            "commanded": command is not None,
-            "lambda_received_ms": received_ms,
-            "expires_at": received_ms // 1000 + HISTORY_TTL_S,
-        }
-    )
+        _iot_client().publish(topic=topic, qos=1, payload=json.dumps(command))
 
     result = {
         "status": "ok",
@@ -85,7 +69,9 @@ def handler(event, context):
         "level": level,
         "mhz": CLOCK_MHZ[level],
         "commanded": command is not None,
+        "gateway_ts": reading["ts"],
+        "lambda_received_ms": received_ms,
     }
-    # One JSON line per reading — easy to query in CloudWatch Logs Insights.
+    # One JSON line per reading — this is the history.
     log.info(json.dumps(result))
     return result

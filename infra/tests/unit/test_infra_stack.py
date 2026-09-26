@@ -58,18 +58,13 @@ def test_iot_can_invoke_lambda(template):
     )
 
 
-def test_readings_table(template):
-    template.has_resource_properties(
-        "AWS::DynamoDB::Table",
-        {
-            "BillingMode": "PAY_PER_REQUEST",
-            "KeySchema": [
-                {"AttributeName": "device_id", "KeyType": "HASH"},
-                {"AttributeName": "ts", "KeyType": "RANGE"},
-            ],
-            "TimeToLiveSpecification": {"AttributeName": "expires_at", "Enabled": True},
-        },
-    )
+def test_no_database(template):
+    # History lives in the Lambda's log group, not a table.
+    template.resource_count_is("AWS::DynamoDB::Table", 0)
+
+
+def test_decide_log_group_one_week(template):
+    template.has_resource_properties("AWS::Logs::LogGroup", {"RetentionInDays": 7})
 
 
 def test_device_policy_has_four_statements(template):

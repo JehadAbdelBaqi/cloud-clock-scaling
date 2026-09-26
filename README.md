@@ -33,7 +33,7 @@ from the cloud, end to end:
    │                          ▲      │                         │     │
    │                          └─MQTT─┼── IoT Core ◄── command ─┘     │
    ▼                                 │                               │
- reconfigure PLL                     │  DynamoDB (reading history)   │
+ reconfigure PLL                     │  CloudWatch Logs (history)    │
  SYSCLK 16 / 50 / 100 MHz            └───────────────────────────────┘
  hold timer → back to 16 MHz when quiet
 ```
@@ -63,7 +63,7 @@ it always returns to its low-power state, even if the network is down.
 firmware/     STM32 firmware (PlatformIO, bare-metal)
 gateway/      Serial ↔ MQTT bridge (Python)
 lambda/       Clock-level decision logic
-infra/        AWS CDK app (IoT Core, Lambda, DynamoDB, pipeline)
+infra/        AWS CDK app (IoT Core, Lambda, pipeline)
 docs/         Diagrams, wiring, scope captures
 ```
 
@@ -72,7 +72,7 @@ docs/         Diagrams, wiring, scope captures
 - [ ] Clock switcher on the board (16 ↔ 50 MHz, then 100 MHz)
 - [ ] Mic → ADC → clap detection
 - [ ] LCD showing the current clock speed
-- [ ] AWS infra in CDK (IoT thing/policy/rule, Lambda, DynamoDB)
+- [ ] AWS infra in CDK (IoT thing/policy/rule, Lambda, log group)
 - [ ] Gateway publishing readings to IoT Core
 - [ ] Full round trip: Lambda → command → board switches clock
 - [ ] Hold-timer decay back to low speed

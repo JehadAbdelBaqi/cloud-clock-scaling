@@ -4,8 +4,8 @@ Resources
 ---------
 - IoT Thing + IoT policy (device identity / what it may publish+subscribe)
 - Optional cert attachments (cert is created outside CDK — see scripts/)
-- DynamoDB table: history of readings + decisions
-- Lambda: picks a clock level from a sound reading, publishes the command
+- Lambda: picks a clock level from a sound reading, publishes the command,
+  logs one JSON line per reading to its log group (the history)
 - IoT topic rule: readings topic -> Lambda
 - Custom resource: looks up this account's IoT data (ATS) endpoint
 """
@@ -17,7 +17,6 @@ from aws_cdk import (
     Duration,
     RemovalPolicy,
     Stack,
-    aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_iot as iot,
     aws_lambda as _lambda,
@@ -137,21 +136,9 @@ class ClockScaleStack(Stack):
         )
         iot_endpoint = endpoint_lookup.get_response_field("endpointAddress")
 
-        # ---- Storage ---------------------------------------------------------
-        table = dynamodb.Table(
-            self,
-            "ReadingsTable",
-            partition_key=dynamodb.Attribute(
-                name="device_id", type=dynamodb.AttributeType.STRING
-            ),
-            sort_key=dynamodb.Attribute(name="ts", type=dynamodb.AttributeType.NUMBER),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            time_to_live_attribute="expires_at",
-            # Demo project: tear down cleanly with `cdk destroy`.
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
         # ---- Decision Lambda -------------------------------------------------
+        # The log group is the reading history: one JSON line per reading,
+        # queryable in CloudWatch Logs Insights.
         decide_logs = logs.LogGroup(
             self,
             "DecideClockFnLogs",
@@ -172,7 +159,6 @@ class ClockScaleStack(Stack):
             timeout=Duration.seconds(5),
             log_group=decide_logs,
             environment={
-                "TABLE_NAME": table.table_name,
                 "IOT_ENDPOINT": iot_endpoint,
                 "TOPIC_ROOT": TOPIC_ROOT,
                 "MED_THRESHOLD": str(med_threshold),
@@ -182,7 +168,6 @@ class ClockScaleStack(Stack):
             },
         )
 
-        table.grant_write_data(decide_fn)
         decide_fn.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["iot:Publish"],
@@ -222,5 +207,5 @@ class ClockScaleStack(Stack):
         CfnOutput(self, "DevicePolicyName", value=device_policy.ref)
         CfnOutput(self, "ReadingsTopic", value=readings_topic)
         CfnOutput(self, "CommandsTopic", value=commands_topic)
-        CfnOutput(self, "TableName", value=table.table_name)
         CfnOutput(self, "DecideFunctionName", value=decide_fn.function_name)
+        CfnOutput(self, "DecideLogGroup", value=decide_logs.log_group_name)
