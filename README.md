@@ -101,6 +101,9 @@ uv run pytest    # infra and lambda tests
 export AWS_PROFILE=clockscale        # your SSO profile name
 aws sso login
 
+aws iot describe-endpoint --endpoint-type iot:Data-ATS
+# put the address into infra/cdk.json -> "iotEndpoint"
+
 scripts/create-device-cert.sh        # creates certs/, prints the cert ARN
 # put the printed ARN into infra/cdk.json -> "certificateArn"
 
@@ -109,7 +112,7 @@ cdk bootstrap                        # once per account/region
 cdk deploy ClockScaleStack
 ```
 
-Stack outputs include `IotEndpoint` — the ESP32-S3 connects to it.
+The ESP32-S3 connects to that same `iotEndpoint` address.
 
 Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
 to `clockscale/#`.
@@ -118,6 +121,7 @@ to `clockscale/#`.
 
 | Key | Default | Meaning |
 |-----|---------|---------|
+| `iotEndpoint` | — | This account's IoT data endpoint (`aws iot describe-endpoint --endpoint-type iot:Data-ATS`) |
 | `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID |
 | `certificateArn` | — | Device cert, from `scripts/create-device-cert.sh` |
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |

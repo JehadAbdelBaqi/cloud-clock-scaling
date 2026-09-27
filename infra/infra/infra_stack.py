@@ -7,7 +7,6 @@ Resources
 - Lambda: picks a clock level from a sound reading, publishes the command,
   logs one JSON line per reading to its log group (the history)
 - IoT topic rule: readings topic -> Lambda
-- Custom resource: looks up this account's IoT data (ATS) endpoint
 """
 import os
 
@@ -21,7 +20,6 @@ from aws_cdk import (
     aws_iot as iot,
     aws_lambda as _lambda,
     aws_logs as logs,
-    custom_resources as cr,
 )
 from constructs import Construct
 
@@ -36,6 +34,7 @@ class ClockScaleStack(Stack):
         scope: Construct,
         construct_id: str,
         *,
+        iot_endpoint: str,
         device_id: str = "nucleo-01",
         certificate_arn: str | None = None,
         med_threshold: int = 100,
@@ -112,39 +111,6 @@ class ClockScaleStack(Stack):
             )
             thing_attach.add_dependency(thing)
 
-        # ---- IoT data endpoint lookup ---------------------------------------
-        # The Lambda publishes commands through the account's ATS data
-        # endpoint. It's account-specific, so look it up at deploy time.
-        # Own log group so it's deleted with the stack — CDK's default one for
-        # the helper Lambda is retained and piles up across deploy/destroy.
-        endpoint_lookup_logs = logs.LogGroup(
-            self,
-            "IotEndpointLookupLogs",
-            retention=logs.RetentionDays.ONE_WEEK,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-        endpoint_lookup = cr.AwsCustomResource(
-            self,
-            "IotEndpointLookup",
-            log_group=endpoint_lookup_logs,
-            on_create=cr.AwsSdkCall(
-                service="Iot",
-                action="describeEndpoint",
-                parameters={"endpointType": "iot:Data-ATS"},
-                physical_resource_id=cr.PhysicalResourceId.of("IotDataAtsEndpoint"),
-            ),
-            on_update=cr.AwsSdkCall(
-                service="Iot",
-                action="describeEndpoint",
-                parameters={"endpointType": "iot:Data-ATS"},
-                physical_resource_id=cr.PhysicalResourceId.of("IotDataAtsEndpoint"),
-            ),
-            policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
-                resources=cr.AwsCustomResourcePolicy.ANY_RESOURCE
-            ),
-        )
-        iot_endpoint = endpoint_lookup.get_response_field("endpointAddress")
-
         # ---- Decision Lambda -------------------------------------------------
         # The log group is the reading history: one JSON line per reading,
         # queryable in CloudWatch Logs Insights.
@@ -168,6 +134,7 @@ class ClockScaleStack(Stack):
             timeout=Duration.seconds(5),
             log_group=decide_logs,
             environment={
+                # Account-specific IoT data (ATS) endpoint, from cdk.json config.
                 "IOT_ENDPOINT": iot_endpoint,
                 "TOPIC_ROOT": TOPIC_ROOT,
                 "MED_THRESHOLD": str(med_threshold),
@@ -211,7 +178,6 @@ class ClockScaleStack(Stack):
         )
 
         # ---- Outputs ---------------------------------------------------------
-        CfnOutput(self, "IotEndpoint", value=iot_endpoint)
         CfnOutput(self, "ThingName", value=thing.ref)
         CfnOutput(self, "DevicePolicyName", value=device_policy.ref)
         CfnOutput(self, "ReadingsTopic", value=readings_topic)

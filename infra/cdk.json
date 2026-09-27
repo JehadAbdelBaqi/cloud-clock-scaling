@@ -15,6 +15,7 @@
     ]
   },
   "context": {
+    "iotEndpoint": "",
     "deviceId": "nucleo-01",
     "certificateArn": "",
     "medThreshold": 100,

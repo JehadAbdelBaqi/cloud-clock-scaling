@@ -28,7 +28,16 @@ env = cdk.Environment(
     region=os.getenv("CDK_DEFAULT_REGION"),
 )
 
+iot_endpoint = ctx("iotEndpoint")
+if not iot_endpoint:
+    raise SystemExit(
+        "Set \"iotEndpoint\" in infra/cdk.json -> context. Get it with:
+"
+        "  aws iot describe-endpoint --endpoint-type iot:Data-ATS"
+    )
+
 settings = {
+    "iot_endpoint": iot_endpoint,
     "device_id": ctx("deviceId") or "nucleo-01",
     "certificate_arn": ctx("certificateArn") or None,
     "med_threshold": ctx_int("medThreshold", 100),

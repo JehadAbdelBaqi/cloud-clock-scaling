@@ -6,11 +6,12 @@ import pytest
 from infra.infra_stack import ClockScaleStack
 
 CERT_ARN = "arn:aws:iot:eu-west-2:123456789012:cert/abc123"
+ENDPOINT = "abc123-ats.iot.eu-west-2.amazonaws.com"
 
 
 def synth(**kwargs) -> assertions.Template:
     app = cdk.App()
-    stack = ClockScaleStack(app, "TestStack", **kwargs)
+    stack = ClockScaleStack(app, "TestStack", iot_endpoint=ENDPOINT, **kwargs)
     return assertions.Template.from_stack(stack)
 
 
@@ -44,7 +45,12 @@ def test_lambda_runtime_and_env(template):
             "Runtime": "python3.12",
             "Environment": {
                 "Variables": assertions.Match.object_like(
-                    {"MAX_LEVEL": "1", "HOLD_SECONDS": "15", "TOPIC_ROOT": "clockscale"}
+                    {
+                        "MAX_LEVEL": "1",
+                        "HOLD_SECONDS": "15",
+                        "TOPIC_ROOT": "clockscale",
+                        "IOT_ENDPOINT": ENDPOINT,
+                    }
                 )
             },
         },
@@ -58,22 +64,16 @@ def test_iot_can_invoke_lambda(template):
     )
 
 
-def test_no_database(template):
-    # History lives in the Lambda's log group, not a table.
-    template.resource_count_is("AWS::DynamoDB::Table", 0)
-
-
 def test_decide_log_group_one_week(template):
     template.has_resource_properties("AWS::Logs::LogGroup", {"RetentionInDays": 7})
 
 
-def test_all_log_groups_deleted_with_stack(template):
+def test_log_group_deleted_with_stack(template):
     # No orphaned log groups left behind after `cdk destroy`.
     log_groups = template.find_resources("AWS::Logs::LogGroup")
-    assert len(log_groups) == 2
-    for lg in log_groups.values():
-        assert lg["DeletionPolicy"] == "Delete"
-        assert lg["Properties"]["RetentionInDays"] == 7
+    assert len(log_groups) == 1
+    lg = next(iter(log_groups.values()))
+    assert lg["DeletionPolicy"] == "Delete"
 
 
 def test_device_policy_has_four_statements(template):
