@@ -89,7 +89,7 @@ it always returns to its low-power state, even if the network is down.
 |------|------|
 | ST **Nucleo-F411RE** (STM32F411RE, Cortex-M4) | The device |
 | Analog microphone module | Sound input — A0 (PA0), ADC1 |
-| **Wi-Fi bridge** (ESP32-S3 board) | The Nucleo has no Wi-Fi. A separate UART-to-MQTT bridge project, treated as a black box: the Nucleo sends and receives plain text lines over UART (USART1, D8/D2), the bridge passes them to and from AWS IoT Core |
+| **Wi-Fi bridge** (ESP32-S3 board) | The Nucleo has no Wi-Fi. A separate UART-to-MQTT bridge project, treated as a black box: the Nucleo sends and receives plain text lines over UART (USART1, D8/D2), the bridge passes them to and from AWS IoT Core — see [docs/wifi-bridge.md](docs/wifi-bridge.md) |
 
 ### Wiring
 
@@ -113,6 +113,7 @@ powers it, flashes it, and carries the PC log (USART2).
 | [infra/cdk/README.md](infra/cdk/README.md) | AWS resources (CDK), settings, deploy |
 | [infra/decide-clock-lambda/README.md](infra/decide-clock-lambda/README.md) | The Lambda: the cloud's decision logic |
 | [docs/protocol.md](docs/protocol.md) | Message formats: board ↔ bridge ↔ cloud |
+| [docs/wifi-bridge.md](docs/wifi-bridge.md) | The Wi-Fi bridge: hardware, what it does, why not ESP-AT, how it was tested |
 | [docs/decisions.md](docs/decisions.md) | Design decisions and why |
 | [docs/resources.md](docs/resources.md) | Hardware, ST datasheets/manuals, tech stack |
 | [docs/how-to/local-testing.md](docs/how-to/local-testing.md) | Running and checking the test programs |
