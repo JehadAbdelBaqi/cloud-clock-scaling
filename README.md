@@ -10,6 +10,10 @@ command back; the firmware switches SYSCLK at runtime between the internal
 UART baud rates on every switch — then returns to 16 MHz on its own after a
 hold time.
 
+![Analog mic (left), STM32 Nucleo-F411RE (middle) and the ESP32-S3 Wi-Fi bridge (right), wired with jumper leads](docs/images/setup.jpg)
+
+*Left to right: analog mic module · STM32 Nucleo-F411RE · ESP32-S3 Wi-Fi bridge.*
+
 > **Status:** working end to end on real hardware. Next: measuring the
 > round-trip latency on an oscilloscope — see [Roadmap](#roadmap).
 
