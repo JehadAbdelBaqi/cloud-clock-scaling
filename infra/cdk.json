@@ -15,9 +15,9 @@
     ]
   },
   "context": {
-    "iotEndpoint": "",
+    "iotEndpoint": "a36a5uvpdary5v-ats.iot.eu-west-2.amazonaws.com",
     "deviceId": "nucleo-01",
-    "certificateArn": "",
+    "certificateArn": "arn:aws:iot:eu-west-2:646519967639:cert/5f3aae1033510b998eb5f15a8ec00a697b84673ed50874c4461a3d402a2b4e85",
     "medThreshold": 100,
     "highThreshold": 300,
     "maxLevel": 1,

@@ -31,8 +31,7 @@ env = cdk.Environment(
 iot_endpoint = ctx("iotEndpoint")
 if not iot_endpoint:
     raise SystemExit(
-        "Set \"iotEndpoint\" in infra/cdk.json -> context. Get it with:
-"
+        "Set \"iotEndpoint\" in infra/cdk.json -> context. Get it with:\n"
         "  aws iot describe-endpoint --endpoint-type iot:Data-ATS"
     )
 

@@ -91,7 +91,7 @@ class ClockScaleStack(Stack):
             },
         )
 
-        # The certificate is made outside CDK (scripts/create-device-cert.sh),
+        # The certificate is made outside CDK (and outside this repo),
         # because CloudFormation can't hand back a private key. Once its ARN is
         # in cdk.json context, CDK attaches the policy + thing to it.
         if certificate_arn:
