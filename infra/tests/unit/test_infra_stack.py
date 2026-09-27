@@ -67,6 +67,15 @@ def test_decide_log_group_one_week(template):
     template.has_resource_properties("AWS::Logs::LogGroup", {"RetentionInDays": 7})
 
 
+def test_all_log_groups_deleted_with_stack(template):
+    # No orphaned log groups left behind after `cdk destroy`.
+    log_groups = template.find_resources("AWS::Logs::LogGroup")
+    assert len(log_groups) == 2
+    for lg in log_groups.values():
+        assert lg["DeletionPolicy"] == "Delete"
+        assert lg["Properties"]["RetentionInDays"] == 7
+
+
 def test_device_policy_has_four_statements(template):
     policies = template.find_resources("AWS::IoT::Policy")
     assert len(policies) == 1

@@ -2,8 +2,7 @@
 #define PROTOCOL_H
 
 /*
- * Board <-> gateway UART protocol. Must match docs/protocol.md and
- * gateway/protocol.py.
+ * Board <-> gateway UART protocol. Must match docs/protocol.md.
  *
  *   Board -> gateway   S,<seq>,<peak>\n          sound reading
  *                      A,<seq>,<mhz>\n           ack: clock switched

@@ -33,7 +33,7 @@ def pick_level(peak: int, med_threshold: int, high_threshold: int, max_level: in
 def parse_reading(event: dict) -> dict:
     """Validate the reading forwarded by the IoT rule.
 
-    Expected (from the gateway, plus device_id added by the rule SQL):
+    Expected (from the device, plus device_id added by the rule SQL):
         {"seq": 42, "peak": 318, "ts": 1790000000123, "device_id": "nucleo-01"}
     """
     try:
@@ -58,6 +58,5 @@ def parse_reading(event: dict) -> dict:
 
 
 def build_command(seq: int, level: int, hold_s: int) -> dict:
-    """Command sent back down to the board (the gateway turns it into a
-    `C,<seq>,<level>,<hold_s>` UART line)."""
+    """Command sent back down to the board."""
     return {"seq": seq, "level": level, "hold_s": hold_s}

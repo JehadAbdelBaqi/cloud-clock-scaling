@@ -115,9 +115,18 @@ class ClockScaleStack(Stack):
         # ---- IoT data endpoint lookup ---------------------------------------
         # The Lambda publishes commands through the account's ATS data
         # endpoint. It's account-specific, so look it up at deploy time.
+        # Own log group so it's deleted with the stack — CDK's default one for
+        # the helper Lambda is retained and piles up across deploy/destroy.
+        endpoint_lookup_logs = logs.LogGroup(
+            self,
+            "IotEndpointLookupLogs",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
         endpoint_lookup = cr.AwsCustomResource(
             self,
             "IotEndpointLookup",
+            log_group=endpoint_lookup_logs,
             on_create=cr.AwsSdkCall(
                 service="Iot",
                 action="describeEndpoint",

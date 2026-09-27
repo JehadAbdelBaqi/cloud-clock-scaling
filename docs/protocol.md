@@ -1,7 +1,6 @@
 # Message Protocol
 
-The contract between the board, the gateway and the cloud. Firmware, gateway
-(`gateway/protocol.py`) and Lambda (`lambda/levels.py`) must all agree with
+The contract between the board, the gateway and the cloud. Firmware and Lambda (`lambda/levels.py`) must all agree with
 this file — change it here first.
 
 ## Clock levels
@@ -55,4 +54,4 @@ also used as the MQTT client ID.
 - The cloud never sends LOW — dropping back is the board's job, so it still
   happens if the network is down.
 - After every switch: recompute anything timed off the bus clock (UART baud
-  register, timer prescalers, SPI prescaler for the LCD).
+  register, timer prescalers).

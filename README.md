@@ -28,8 +28,8 @@ from the cloud, end to end:
  [Analog mic]                        │  IoT Core ── Rule ──► Lambda  │
    │ ADC                             │   ▲                     │     │
    ▼                                 │   │ readings            │     │
- [STM32 Nucleo-F411RE]   UART/USB    │   │                     ▼     │
-   sample → peak ──────► [Gateway] ─MQTT─┘          picks clock level│
+ [STM32 Nucleo-F411RE]   UART        │   │                     ▼     │
+   sample → peak ──────► [ESP32-S3] ─MQTT┘          picks clock level│
    │                          ▲      │                         │     │
    │                          └─MQTT─┼── IoT Core ◄── command ─┘     │
    ▼                                 │                               │
@@ -54,14 +54,12 @@ it always returns to its low-power state, even if the network is down.
 |------|------|
 | ST **Nucleo-F411RE** (STM32F411RE, Cortex-M4F) | The device |
 | Analog microphone module | Sound input (ADC) |
-| 0.96" IPS LCD | Shows the current clock speed |
-| PC → later an **ESP32-S3** running ESP-AT | Network link (the Nucleo has no Wi-Fi) |
+| **ESP32-S3** (Axiometa Genesis Mini) running ESP-AT | Wi-Fi co-processor — the Nucleo drives it with AT commands over UART (the Nucleo has no Wi-Fi) |
 
 ## Repo layout
 
 ```
 firmware/     STM32 firmware (PlatformIO, bare-metal)
-gateway/      Serial ↔ MQTT bridge (Python)
 lambda/       Clock-level decision logic
 infra/        AWS CDK app (IoT Core, Lambda)
 docs/         Diagrams, wiring, scope captures
@@ -71,14 +69,14 @@ docs/         Diagrams, wiring, scope captures
 
 - [ ] Clock switcher on the board (16 ↔ 50 MHz, then 100 MHz)
 - [ ] Mic → ADC → clap detection
-- [ ] LCD showing the current clock speed
 - [ ] AWS infra in CDK (IoT thing/policy/rule, Lambda, log group)
-- [ ] Gateway publishing readings to IoT Core
+- [ ] ESP32-S3 (ESP-AT) publishing readings to IoT Core
 - [ ] Full round trip: Lambda → command → board switches clock
 - [ ] Hold-timer decay back to low speed
 - [ ] GitHub Actions (tests, `cdk synth`, firmware build, deploy)
 - [ ] End-to-end latency measured on an oscilloscope
-- [ ] Replace the PC gateway with an ESP32-S3 Wi-Fi module (ESP-AT)
+
+**Nice to have:** a small LCD on the board showing the current clock speed.
 
 ## Getting started
 
@@ -87,26 +85,17 @@ CLI), AWS CLI v2 with an SSO profile (`aws configure sso`),
 `npm install -g aws-cdk`.
 
 Python dependencies live in one `pyproject.toml` at the repo root, managed by
-uv — one venv for infra, Lambda and gateway. All commands below run from the
+uv — one venv for infra and Lambda. All commands below run from the
 **repo root** unless they say otherwise.
 
 ### 1. Install + run the tests (no AWS needed)
 
 ```bash
 uv sync          # creates .venv and installs everything from uv.lock
-uv run pytest    # infra, lambda and gateway tests
+uv run pytest    # infra and lambda tests
 ```
 
-### 2. Try the gateway offline
-
-A simulated board plus a local stand-in for the Lambda — the whole loop
-with no board and no AWS:
-
-```bash
-uv run python gateway/gateway.py --simulate --dry-run
-```
-
-### 3. Deploy to AWS
+### 2. Deploy to AWS
 
 ```bash
 export AWS_PROFILE=clockscale        # your SSO profile name
@@ -120,14 +109,7 @@ cdk bootstrap                        # once per account/region
 cdk deploy ClockScaleStack
 ```
 
-Stack outputs include `IotEndpoint` — the gateway needs it.
-
-### 4. Connect the gateway
-
-```bash
-uv run python gateway/gateway.py --simulate --endpoint <IotEndpoint>   # fake board, real AWS
-uv run python gateway/gateway.py --port COM5 --endpoint <IotEndpoint>  # real board
-```
+Stack outputs include `IotEndpoint` — the ESP32-S3 connects to it.
 
 Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
 to `clockscale/#`.
