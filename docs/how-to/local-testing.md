@@ -1,0 +1,82 @@
+# Local Testing
+
+How to check the firmware's clock switching on the board alone — no cloud, no
+Wi-Fi. Each test type is a build-time switch in `firmware/include/app_config.h`.
+
+## How it works
+
+- Every boot starts at `BOOT_CLOCK` (16 MHz) — always, test or not.
+- `IS_LOCAL_TEST = 1` → `main()` hands over to the local test after setup. The
+  test never returns.
+- `IS_LOCAL_TEST = 0` → the test call is removed at build time (`#if`); it isn't
+  in the firmware at all.
+- Change a setting → rebuild + upload. Nothing is read at run time.
+
+## Test types
+
+| Test | What triggers a switch | Code |
+|------|------------------------|------|
+| Clock cycle | Every SysTick countdown to 0 | `firmware/src/tests/clock_cycle_test.c` |
+
+## Clock cycle test
+
+Flips 16 MHz ↔ 50 MHz every time SysTick counts down to 0. LD2 shows the clock
+one of two ways, picked by `TEST_SW_LED`:
+
+| `TEST_SW_LED` | LED driven by | What you see |
+|---------------|---------------|--------------|
+| `0` | SysTick — toggles with each switch | Long phase = 16 MHz, short phase = 50 MHz |
+| `1` | Software loop counter | Slow blink = 16 MHz, fast blink = 50 MHz |
+
+**Software counter:** the test loop counts passes and toggles LD2 every
+`TEST_SW_LED_LOOPS`. A faster CPU clock runs the loop faster, so the blink speeds
+up. Not exactly 50/16 = 3.1× — flash wait-states at 50 MHz slow each pass a bit.
+
+**Why SysTick phases show the clock:** SysTick counts CPU clock ticks (or CPU clock ÷ 8)
+and its reload is never changed. So the same count takes longer at 16 MHz than
+at 50 MHz — a long LED phase = 16 MHz, a short one = 50 MHz.
+
+### Settings (`app_config.h`)
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| `IS_LOCAL_TEST` | `1` | Runs the test |
+| `BLINK_RELOAD` | `0xFFFFFF` | SysTick max (24-bit) — longest possible count |
+| `SYSTICK_DIV8` | `1` | SysTick on CPU clock ÷ 8 — slow enough to see both phases |
+| `TEST_SW_LED` | `0` / `1` | LED from SysTick / from the software counter |
+| `TEST_SW_LED_LOOPS` | `200000` | Loop passes per toggle — tune by eye |
+| `BOOT_CLOCK` | `CLOCK_16MHZ` | Test starts from the standard boot speed |
+
+### Expected (SysTick phase lengths)
+
+| `SYSTICK_DIV8` | 16 MHz phase | 50 MHz phase |
+|----------------|--------------|--------------|
+| `0` | ~1.05 s | ~0.34 s — hard to see |
+| `1` | ~8.4 s | ~2.7 s |
+
+Maths: `(BLINK_RELOAD + 1) / SysTick clock` — e.g. 16,777,216 / 2 MHz ≈ 8.4 s.
+
+### Run it
+
+1. Set the settings above in `app_config.h`.
+2. PlatformIO → **Build**, then **Upload**.
+3. Watch LD2 (the green user LED): long/short phases (`TEST_SW_LED = 0`) or
+   slow/fast blinking (`TEST_SW_LED = 1`).
+
+### Check it in the debugger (optional)
+
+1. PlatformIO → **Start Debugging** (F5). It pauses at the start of `main()` —
+   press F5 again to continue.
+2. **Watch** panel → **+** → `clock_speed_mhz`.
+3. Breakpoint just after `clock_speed_mhz = ...` in the test. Each F5 stops at
+   the next switch — the value alternates 16 / 50.
+4. **Shift+F5** to stop debugging.
+
+`clock_speed_mhz` shows the speed the code asked for, not a register read.
+`clock_set()` only returns once the hardware confirms the switch (SWS bits), so
+it's a good sign but not proof.
+
+## Related
+
+- [protocol.md](../protocol.md) — clock levels and message formats
+- [README](../../README.md)
