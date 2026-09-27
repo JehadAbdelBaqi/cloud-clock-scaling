@@ -11,6 +11,7 @@ certs/
 
 # PlatformIO
 .pio/
+.vscode/
 
 # Python
 __pycache__/
