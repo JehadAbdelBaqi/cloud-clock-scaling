@@ -17,6 +17,19 @@ hold time.
 > **Status:** working end to end on real hardware. Next: measuring the
 > round-trip latency on an oscilloscope — see [Roadmap](#roadmap).
 
+## Demo
+
+![A finger snap by the mic: the bridge LED blinks blue then green, the Nucleo's LED speeds up (50 MHz), then slows again (16 MHz) after the hold time; a second snap speeds it up again](docs/images/demo.gif)
+
+*A finger snap by the mic → the bridge blinks **blue** (reading sent) then
+**green** (command back) → the Nucleo's LED blinks fast (50 MHz) → about 5 s
+later it's back to slow (16 MHz). A second snap speeds it up again.*
+
+The same round trip in the AWS IoT **MQTT test client** — the reading going up
+and the Lambda's command coming back, same `seq`, same second:
+
+![AWS IoT MQTT test client: a reading {seq 19, peak 369} on clockscale/nucleo-01/readings and the command {seq 19, level 1} on clockscale/nucleo-01/commands](docs/images/mqtt-test-client.png)
+
 ## How it works
 
 1. **Listen** — the Nucleo reads an analog mic on its ADC and measures
@@ -155,7 +168,7 @@ What you can do from this repo alone, and what each step adds:
 | Build the firmware | + PlatformIO |
 | Clock-cycle test on the board | + a Nucleo-F411RE |
 | Deploy the cloud side | + an AWS account |
-| **Full loop** (loud noise → clock switch) | + a mic module and a **Wi-Fi bridge** (below) |
+| **Full loop** (loud noise → clock switch) | + a mic module and a **Wi-Fi bridge** ([what it is](docs/wifi-bridge.md)) |
 
 ### Prerequisites
 
@@ -216,7 +229,8 @@ aws sso login                         # or however you log in to your account
 aws iot describe-endpoint --endpoint-type iot:Data-ATS
 
 # 2. A device certificate. The ARN it prints -> infra/cdk/cdk.json "certificateArn".
-#    The two key files are for the Wi-Fi bridge — keep them OUT of this repo.
+#    The certificate and private key files are loaded onto the Wi-Fi bridge —
+#    they are not stored in this repo.
 aws iot create-keys-and-certificate --set-as-active \
   --certificate-pem-outfile device.pem.crt \
   --private-key-outfile private.pem.key \
@@ -228,7 +242,7 @@ cdk bootstrap                         # once per account/region
 cdk deploy ClockScaleStack
 ```
 
-The bridge needs four things from this step: the **endpoint**, the
+The [Wi-Fi bridge](docs/wifi-bridge.md#device-identity-x509) needs four things from this step: the **endpoint**, the
 **certificate** and **private key** above, and
 [Amazon's root CA](https://www.amazontrust.com/repository/AmazonRootCA1.pem).
 
@@ -241,7 +255,7 @@ subscribe to `clockscale/#`.
 |-----|---------|---------|
 | `iotEndpoint` | — | This account's IoT data endpoint |
 | `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID (the bridge must connect with it) |
-| `certificateArn` | — | Device certificate ARN — not a secret; the key never goes in this repo |
+| `certificateArn` | — | Device certificate ARN — not a secret; the private key is kept on the bridge, not in this repo |
 | `medThreshold` | 100 | Loudness that gets a 50 MHz command *(to calibrate)* |
 | `maxLevel` | 1 | Highest level the cloud sends (1 = 50 MHz) |
 
@@ -250,7 +264,7 @@ More: [infra/cdk/README.md](infra/cdk/README.md).
 ### 4. The full loop
 
 1. Wire the mic and the bridge to the Nucleo — [Wiring](#wiring).
-2. Bridge running and connected to IoT Core (step 3's endpoint, certificate,
+2. [Wi-Fi bridge](docs/wifi-bridge.md) running and connected to IoT Core (step 3's endpoint, certificate,
    key and root CA, plus your Wi-Fi).
 3. Firmware with `IS_CLOUD_TEST = 1`, uploaded.
 4. Make a loud noise near the mic: the Nucleo sends a reading, the command

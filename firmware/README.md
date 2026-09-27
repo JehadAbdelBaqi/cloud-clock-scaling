@@ -82,7 +82,7 @@ Shared helpers: `test_led.c` (LED blink that speeds up with the clock) and
 | `MIC_WINDOW_SAMPLES` | `256` | Readings per loudness window |
 | `MIC_CLAP_LEVEL` | `100` | "Loud noise": a window with peak-to-peak ≥ this (ADC counts, ≈ 80 mV) is sent straight away — keep equal to the cloud's `medThreshold`. See the main README |
 | `READING_INTERVAL_S` | `30` | Regular reading interval |
-| `HOLD_S` | `15` | How long to stay at 50 MHz after a command |
+| `HOLD_S` | `5` | How long to stay at 50 MHz after a command |
 | `BLINK_RELOAD` / `SYSTICK_DIV8` | `0xFFFFFF` / `1` | SysTick countdown length — also the timebase for the hold and reading interval |
 | `TEST_SW_LED` / `TEST_SW_LED_LOOPS` | `1` / per test | LED blink mode + speed |
 | `TEST_UART_LOG` | `1` | Log to the PC serial monitor |

@@ -34,7 +34,7 @@
 // How long to stay at the raised clock after a command, before dropping back
 // to 16 MHz. The board's decision — the cloud only says "speed up".
 // Counted in whole SysTick countdowns (~2.7 s each at 50 MHz), so it lands a little over.
-#define HOLD_S 15
+#define HOLD_S 5
 
 // Tests only. 0 = LED toggles on each SysTick underflow
 // 1 = LED driven by a software loop counter — blinks faster at 50 MHz

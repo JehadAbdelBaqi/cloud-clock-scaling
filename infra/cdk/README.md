@@ -35,7 +35,7 @@ Stack outputs: thing name, policy name, topics, Lambda name, log group name.
 |-----|---------|---------|
 | `iotEndpoint` | — (required) | The account's IoT data endpoint: `aws iot describe-endpoint --endpoint-type iot:Data-ATS` |
 | `deviceId` | `nucleo-01` | Thing name + MQTT client ID |
-| `certificateArn` | — | Device certificate ARN (not a secret — the key never comes near this repo) |
+| `certificateArn` | — | Device certificate ARN — not a secret; the private key is kept on the bridge, not in this repo |
 | `medThreshold` | 100 | Loudness that gets a MED (50 MHz) command |
 | `maxLevel` | 1 | Highest level the cloud sends (1 = MED) |
 

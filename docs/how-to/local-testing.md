@@ -103,7 +103,7 @@ stack deployed.
 | `IS_CLOUD_TEST` | `1` | Runs the test (`IS_LOCAL_TEST` = `0`) |
 | `MIC_CLAP_LEVEL` | `100` | A window this loud is sent straight away — keep equal to the cloud's `medThreshold` |
 | `READING_INTERVAL_S` | `30` | Regular reading (loudest level since the last one) |
-| `HOLD_S` | `15` | How long to stay at 50 MHz after a command |
+| `HOLD_S` | `5` | How long to stay at 50 MHz after a command |
 
 With `TEST_UART_LOG = 1` the PC monitor shows every line sent (`->`) and
 received (`<-`). A clap should give:
@@ -113,7 +113,7 @@ received (`<-`). A clap should give:
 <- C,4,1
 50 MHz
 -> A,4,50
-... ~15 s later
+... ~5 s later
 16 MHz
 -> A,4,16
 ```
