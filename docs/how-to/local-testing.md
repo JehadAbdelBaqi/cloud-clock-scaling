@@ -45,6 +45,8 @@ at 50 MHz — a long LED phase = 16 MHz, a short one = 50 MHz.
 | `SYSTICK_DIV8` | `1` | SysTick on CPU clock ÷ 8 — slow enough to see both phases |
 | `TEST_SW_LED` | `0` / `1` | LED from SysTick / from the software counter |
 | `TEST_SW_LED_LOOPS` | `200000` | Loop passes per toggle — tune by eye |
+| `TEST_UART_LOG` | `1` | Log each switch to the PC serial monitor |
+| `UART_BAUD` | `115200` | Must match `monitor_speed` in `platformio.ini` |
 | `BOOT_CLOCK` | `CLOCK_16MHZ` | Test starts from the standard boot speed |
 
 ### Expected (SysTick phase lengths)
@@ -62,6 +64,34 @@ Maths: `(BLINK_RELOAD + 1) / SysTick clock` — e.g. 16,777,216 / 2 MHz ≈ 8.4 
 2. PlatformIO → **Build**, then **Upload**.
 3. Watch LD2 (the green user LED): long/short phases (`TEST_SW_LED = 0`) or
    slow/fast blinking (`TEST_SW_LED = 1`).
+
+### Log to the PC (optional)
+
+With `TEST_UART_LOG = 1` the test prints each switch over USART2 (PA2), which the
+Nucleo's ST-LINK passes to the PC as a virtual COM port over the same USB cable.
+**Local testing only** — the UART code is built in only inside the test, never
+in the normal firmware.
+
+1. Build + upload.
+2. PlatformIO toolbar → **plug icon** (Serial Monitor). Opens at 115200 from
+   `monitor_speed`.
+3. Press **RESET** on the board to see it from the start:
+
+```
+clock cycle test: 16 MHz
+50 MHz
+16 MHz
+50 MHz
+...
+```
+
+**Why the text stays readable across switches:** the baud divider (`BRR`) is
+worked out from the CPU clock. On every switch the test waits for the last byte
+to finish (`uart_flush`), changes the clock, then recomputes `BRR`
+(`uart_set_clock`). Skip that and every line after a switch is garbage.
+
+**Monitor goes quiet after RESET** (board still blinking) → close it (Ctrl+C)
+and reopen it. Cause not confirmed yet.
 
 ### Check it in the debugger (optional)
 

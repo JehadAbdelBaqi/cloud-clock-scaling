@@ -5,6 +5,8 @@
 #include "regs/flash.h"
 #include "regs/rcc.h"
 
+static clock_speed_t current = CLOCK_16MHZ;  // reset default: HSI
+
 static void set_latency(uint8_t ws) {
     FLASH_ACR = (FLASH_ACR & ~FLASH_ACR_LATENCY_MASK) | ws;
     while ((FLASH_ACR & FLASH_ACR_LATENCY_MASK) != ws) {}  // confirm before moving on
@@ -45,4 +47,10 @@ void clock_set(clock_speed_t speed) {
     if (cfg->latency < current_ws) {
         set_latency(cfg->latency);
     }
+
+    current = speed;
+}
+
+uint32_t clock_get_hz(void) {
+    return clock_cfg[current].hz;
 }

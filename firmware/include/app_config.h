@@ -7,9 +7,6 @@
 // Clock the board boots at — standard is 16 MHz (HSI), from clock.h
 #define BOOT_CLOCK CLOCK_16MHZ
 
-// Status LED: PA5 = LD2 (port A pin, from regs/gpio.h)
-#define LED_PIN PIN5
-
 // SysTick reload (24-bit max) — never changed, so blink rate tracks the CPU clock
 #define BLINK_RELOAD 0xFFFFFF
 
@@ -26,5 +23,12 @@
 
 // Loop passes per LED toggle when TEST_SW_LED = 1 — tune by eye
 #define TEST_SW_LED_LOOPS 200000
+
+// Local test only. 1 = log each clock switch to the PC serial monitor
+// (USART2 -> ST-LINK virtual COM port)
+#define TEST_UART_LOG 1
+
+// PC serial baud. Must match monitor_speed in platformio.ini
+#define UART_BAUD 115200
 
 #endif
