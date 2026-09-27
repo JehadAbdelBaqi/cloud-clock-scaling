@@ -3,7 +3,7 @@ import aws_cdk as cdk
 import aws_cdk.assertions as assertions
 import pytest
 
-from infra.infra_stack import ClockScaleStack
+from IaC.infra_stack import ClockScaleStack
 
 CERT_ARN = "arn:aws:iot:eu-west-2:123456789012:cert/abc123"
 ENDPOINT = "abc123-ats.iot.eu-west-2.amazonaws.com"

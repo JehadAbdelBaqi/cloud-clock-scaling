@@ -1,13 +1,13 @@
-# Lambda
+# decide-clock-lambda — the Lambda
 
 The cloud's decision: for every sound reading, pick a clock level and — if it's
 above LOW — publish a command back to the device. Python 3.12, deployed by
-[`../infra/`](../infra/README.md).
+[`../cdk/`](../cdk/README.md).
 
 ## Layout
 
 ```
-lambda/
+infra/decide-clock-lambda/
 ├── handler.py      Entry point: reading in -> level -> command out -> one log line
 ├── levels.py       Pure decision logic, no AWS imports (easy to unit-test)
 └── tests/          pytest — levels + handler (IoT client faked)
@@ -22,11 +22,10 @@ lambda/
 
    | Loudness | Level |
    |----------|-------|
-   | ≥ `HIGH_THRESHOLD` | HIGH (100 MHz) |
    | ≥ `MED_THRESHOLD` | MED (50 MHz) |
    | below | LOW — no command |
 
-   Capped at `MAX_LEVEL`.
+   Capped at `MAX_LEVEL` (1 = MED).
 4. Above LOW → publish `{"seq", "level"}` to `clockscale/<device_id>/commands`.
    **LOW is never sent** — dropping back, and how long to hold, is the board's job.
 5. Log one JSON line per reading (level, whether a command went out, timings) —
@@ -38,7 +37,7 @@ lambda/
 |----------|---------|
 | `IOT_ENDPOINT` | Where to publish commands |
 | `TOPIC_ROOT` | `clockscale` |
-| `MED_THRESHOLD` / `HIGH_THRESHOLD` | Loudness thresholds |
+| `MED_THRESHOLD` | Loudness for MED |
 | `MAX_LEVEL` | Highest level allowed |
 
 ## Tests

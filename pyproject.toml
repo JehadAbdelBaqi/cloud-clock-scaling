@@ -16,10 +16,13 @@ dev = [
     "pytest",
     "boto3",  # built into the Lambda runtime; needed locally for tests
 ]
+firmware = [
+    "platformio==6.2.0",  # build tool for firmware/ (CI); locked with hashes in uv.lock
+]
 
 [tool.uv]
 package = false
 default-groups = ["infra", "dev"]
 
 [tool.pytest.ini_options]
-testpaths = ["infra/tests", "lambda/tests"]
+testpaths = ["infra/cdk/tests", "infra/decide-clock-lambda/tests"]

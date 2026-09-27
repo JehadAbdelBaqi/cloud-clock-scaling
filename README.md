@@ -1,11 +1,47 @@
 # Cloud-Controlled Clock Scaling — STM32 + AWS IoT
 
-A clap near an STM32 board changes the board's CPU clock speed — decided in
-the cloud. Sound readings go up to AWS IoT Core, a Lambda picks a clock
-level, and the command comes back down to the board, which reconfigures its
-PLL at runtime. When it goes quiet, the board drops itself back to low speed.
+[![CI](https://github.com/JehadAbdelBaqi/cloud-clock-scaling/actions/workflows/ci.yml/badge.svg)](https://github.com/JehadAbdelBaqi/cloud-clock-scaling/actions/workflows/ci.yml)
+
+This project is a cloud-driven **dynamic frequency scaling** for a bare-metal STM32F411
+(Cortex-M4). The board samples sound through its ADC and reports the level
+over MQTT to AWS IoT Core; a Lambda decides the clock level and publishes a
+command back; the firmware switches SYSCLK at runtime between the internal
+16 MHz oscillator and the PLL (50 MHz) — adjusting flash wait-states and
+UART baud rates on every switch — then returns to 16 MHz on its own after a
+hold time.
 
 > **Status: in progress.** See [Roadmap](#roadmap) for what works today.
+
+## How it works
+
+1. **Listen** — the Nucleo reads an analog mic on its ADC and measures
+   loudness as peak-to-peak over short windows.
+2. **Report** — any loud noise above a threshold is sent straight away
+   (plus a regular reading every 30 s) as a text line over UART to a Wi-Fi
+   bridge, which publishes it to AWS IoT Core over MQTT/TLS.
+3. **Decide** — an IoT rule invokes a Lambda, which maps the loudness to a
+   clock level and publishes a command to the device's topic.
+4. **Switch** — the command comes back through the bridge; the firmware
+   raises flash wait-states, moves SYSCLK onto the PLL at 50 MHz, recomputes
+   its UART baud dividers and acknowledges.
+5. **Fall back** — after the hold time the board switches back to 16 MHz
+   by itself, whether or not the cloud is reachable.
+
+### What counts as a "loud noise"
+
+The mic module outputs a voltage that swings up and down with the sound
+wave, around a steady middle level. The ADC reads it as a 12-bit number:
+0–4095 for 0–3.3 V (≈ 0.8 mV per step).
+
+- **Loudness** = the **peak-to-peak** of those readings over one window of
+  256 samples (a few ms): highest reading − lowest reading. Silence gives a
+  small number; a louder sound swings further and gives a bigger one.
+- **Loud noise** = a window with loudness **≥ 100** (≈ 80 mV of swing) —
+  `MIC_CLAP_LEVEL` on the board, the same value as `medThreshold` in the
+  cloud, so every loud noise the board sends gets a 50 MHz command back.
+- The number depends on the mic module's **GAIN** trimmer and how far the
+  sound is from the mic — 100 is a starting point to calibrate against
+  real quiet vs loud readings.
 
 ## Why
 
@@ -16,13 +52,13 @@ from the cloud, end to end:
 - **Embedded:** bare-metal STM32 (register-level, no HAL) — PLL
   reconfiguration, flash wait-states, ADC, UART, timers
 - **IoT:** device ↔ cloud round trip over MQTT, X.509 device identity
-- **DevOps:** all AWS resources in CDK, unit-tested *(GitHub Actions
-  pipeline + firmware build in CI: planned)*
+- **DevOps:** all AWS resources in CDK, unit-tested; GitHub Actions runs the
+  tests and builds the firmware on pushes marked `[ci:run-tests]` (deploys are run by hand)
 
 ## Architecture
 
 ```
-  CLAP                                               AWS
+  LOUD NOISE                                         AWS
    │                                       ┌───────────────────────────────┐
    ▼                                       │                               │
  [Analog mic]                              │  IoT Core ── Rule ──► Lambda  │
@@ -41,7 +77,6 @@ from the cloud, end to end:
 |-------------|--------|--------|
 | LOW | 16 MHz | HSI (internal oscillator) |
 | MED | 50 MHz | PLL |
-| HIGH | 100 MHz | PLL (chip max) — *not in the firmware yet* |
 
 **Edge vs cloud split:** the cloud decides when to speed up; the board is
 responsible for dropping back to low speed on its own after a hold time — so
@@ -60,8 +95,8 @@ it always returns to its low-power state, even if the network is down.
 | Doc | What's in it |
 |-----|--------------|
 | [firmware/README.md](firmware/README.md) | STM32 firmware — layout, drivers, settings, build/upload |
-| [lambda/README.md](lambda/README.md) | The cloud's decision logic |
-| [infra/README.md](infra/README.md) | AWS resources (CDK), settings, deploy |
+| [infra/cdk/README.md](infra/cdk/README.md) | AWS resources (CDK), settings, deploy |
+| [infra/decide-clock-lambda/README.md](infra/decide-clock-lambda/README.md) | The Lambda: the cloud's decision logic |
 | [docs/protocol.md](docs/protocol.md) | Message formats: board ↔ bridge ↔ cloud |
 | [docs/decisions.md](docs/decisions.md) | Design decisions and why |
 | [docs/resources.md](docs/resources.md) | Hardware, ST datasheets/manuals, tech stack |
@@ -71,25 +106,25 @@ it always returns to its low-power state, even if the network is down.
 
 ```
 firmware/     STM32 firmware (PlatformIO, bare-metal)
-lambda/       Clock-level decision logic
-infra/        AWS CDK app (IoT Core, Lambda)
+infra/
+  cdk/                  AWS CDK app (IoT Core, Lambda, log group)
+  decide-clock-lambda/  Lambda: clock-level decision logic
 docs/         Message protocol, design decisions, resources, how-to guides
 ```
 
 Each part has its own README: [firmware](firmware/README.md) ·
-[lambda](lambda/README.md) · [infra](infra/README.md). Why things are built
+[cdk](infra/cdk/README.md) · [decide-clock-lambda](infra/decide-clock-lambda/README.md). Why things are built
 the way they are: [docs/decisions.md](docs/decisions.md).
 
 ## Roadmap
 
 - [x] Clock switcher on the board (16 ↔ 50 MHz)
-- [ ] 100 MHz level
 - [x] AWS infra in CDK (IoT thing/policy/rule, Lambda, log group)
 - [x] Wi-Fi bridge publishing readings to IoT Core
 - [x] Full round trip: Lambda → command → board switches clock
 - [x] Hold timer on the board → back to low speed
-- [ ] Mic → ADC → clap detection *(built, being tested + calibrated)*
-- [ ] GitHub Actions (tests, `cdk synth`, firmware build, deploy)
+- [x] Mic → ADC → loud-noise detection
+- [x] GitHub Actions: tests + firmware build on pushes marked `[ci:run-tests]` (no deploy)
 - [ ] End-to-end latency measured on an oscilloscope
 
 **Nice to have:** a small LCD on the board showing the current clock speed.
@@ -118,12 +153,12 @@ export AWS_PROFILE=clockscale        # your SSO profile name
 aws sso login
 
 aws iot describe-endpoint --endpoint-type iot:Data-ATS
-# put the address into infra/cdk.json -> "iotEndpoint"
+# put the address into infra/cdk/cdk.json -> "iotEndpoint"
 
 # device cert is created by the UART-MQTT bridge project (the key lives there);
-# put its ARN into infra/cdk.json -> "certificateArn"
+# put its ARN into infra/cdk/cdk.json -> "certificateArn"
 
-cd infra
+cd infra/cdk
 cdk bootstrap                        # once per account/region
 cdk deploy ClockScaleStack          # from Git Bash: add --require-approval never
 ```
@@ -133,15 +168,15 @@ The Wi-Fi bridge connects to that same `iotEndpoint` address.
 Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
 to `clockscale/#`.
 
-### Settings (`infra/cdk.json` → `context`)
+### Settings (`infra/cdk/cdk.json` → `context`)
 
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `iotEndpoint` | — | This account's IoT data endpoint (`aws iot describe-endpoint --endpoint-type iot:Data-ATS`) |
 | `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID |
 | `certificateArn` | — | Device cert ARN — the cert itself is made and kept outside this repo |
-| `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
-| `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until the firmware has a 100 MHz setting) |
+| `medThreshold` | 100 | Loudness that gets a 50 MHz command *(to calibrate)* |
+| `maxLevel` | 1 | Highest level the cloud sends (1 = 50 MHz) |
 
 ### 3. Firmware
 

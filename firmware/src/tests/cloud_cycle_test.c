@@ -145,7 +145,7 @@ void cloud_cycle_test_run(void) {
 
             uint32_t cseq, level;
             if (parse_command(line, &cseq, &level) && level > 0) {
-                // Level 1+ = 50 MHz (no 100 MHz setting in the firmware yet)
+                // Level 1+ = 50 MHz
                 if (speed != CLOCK_50MHZ) {
                     speed = CLOCK_50MHZ;
                     switch_to(speed);

@@ -1,7 +1,7 @@
 # Message Protocol
 
 The contract between the board, the Wi-Fi bridge and the cloud. Firmware and
-Lambda (`lambda/levels.py`) must all agree with this file — change it here first.
+Lambda (`infra/decide-clock-lambda/levels.py`) must all agree with this file — change it here first.
 
 ## Clock levels
 
@@ -9,10 +9,8 @@ Lambda (`lambda/levels.py`) must all agree with this file — change it here fir
 |-------|------|--------|--------|
 | 0 | LOW | 16 MHz | HSI |
 | 1 | MED | 50 MHz | PLL |
-| 2 | HIGH | 100 MHz | PLL — chip max *(not in the firmware yet)* |
 
-`maxLevel` in `infra/cdk.json` caps what the cloud will send — keep it at 1
-until the firmware has a 100 MHz setting.
+`maxLevel` in `infra/cdk/cdk.json` caps what the cloud will send — 1 (MED).
 
 ## UART (board ↔ bridge)
 
@@ -23,7 +21,7 @@ output and ignored.
 
 | Line | Direction | Meaning |
 |------|-----------|---------|
-| `S,<seq>,<peak>` | board → bridge | Sound reading. `peak` = ADC peak-to-peak over one window. Sent every 30 s, and straight away on a clap |
+| `S,<seq>,<peak>` | board → bridge | Sound reading. `peak` = ADC peak-to-peak over one window, in ADC counts (0–4095). Sent every 30 s, and straight away on a loud noise (see [What counts as a "loud noise"](../README.md#what-counts-as-a-loud-noise)) |
 | `A,<seq>,<mhz>` | board → bridge | Ack: clock switched, now at `<mhz>`. The bridge doesn't forward it to AWS yet |
 | `C,<seq>,<level>` | bridge → board | Switch to `<level>`. The board holds it for its own hold time, then drops back to LOW |
 

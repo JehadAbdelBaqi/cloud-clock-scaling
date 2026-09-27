@@ -23,7 +23,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-LAMBDA_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "lambda")
+LAMBDA_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "decide-clock-lambda")
 
 TOPIC_ROOT = "clockscale"
 

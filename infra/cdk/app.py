@@ -12,7 +12,7 @@ import os
 
 import aws_cdk as cdk
 
-from infra.infra_stack import ClockScaleStack
+from IaC.infra_stack import ClockScaleStack
 
 app = cdk.App()
 ctx = app.node.try_get_context
@@ -31,7 +31,7 @@ env = cdk.Environment(
 iot_endpoint = ctx("iotEndpoint")
 if not iot_endpoint:
     raise SystemExit(
-        "Set \"iotEndpoint\" in infra/cdk.json -> context. Get it with:\n"
+        "Set \"iotEndpoint\" in infra/cdk/cdk.json -> context. Get it with:\n"
         "  aws iot describe-endpoint --endpoint-type iot:Data-ATS"
     )
 

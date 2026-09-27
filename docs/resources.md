@@ -7,7 +7,7 @@ bridge is treated as a black box and isn't listed here.
 
 ### STM32 Nucleo-F411RE
 
-The main board — STM32F411RE (Arm Cortex-M4, up to 100 MHz), programmed
+The main board — STM32F411RE (Arm Cortex-M4), programmed
 bare-metal (registers only, no HAL).
 
 - Board page: <https://www.st.com/en/evaluation-tools/nucleo-f411re.html>
@@ -61,6 +61,7 @@ amplifier with a GAIN trimmer.
 | pytest | Unit tests for the infra and the Lambda |
 | AWS CLI | Device certificate, IoT endpoint lookup |
 | Git + Git Bash | Version control, running the CDK / AWS commands |
+| [GitHub Actions](https://docs.github.com/actions) | CI: tests + firmware build when a pushed commit message contains `[ci:run-tests]` (`.github/workflows/ci.yml`) |
 | [Claude Code](https://claude.com/claude-code) | AI pair-programmer used throughout |
 
 ## Related
