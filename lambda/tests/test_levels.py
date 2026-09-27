@@ -53,4 +53,4 @@ def test_parse_reading_rejects_bad_input(event):
 
 
 def test_build_command():
-    assert build_command(42, MED, 15) == {"seq": 42, "level": 1, "hold_s": 15}
+    assert build_command(42, MED) == {"seq": 42, "level": 1}

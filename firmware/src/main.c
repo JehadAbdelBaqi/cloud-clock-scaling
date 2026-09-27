@@ -6,6 +6,7 @@
 #include "regs/rcc.h"
 #include "regs/systick.h"
 #include "tests/clock_cycle_test.h"
+#include "tests/cloud_cycle_test.h"
 
 int main(void) {
     clock_set(BOOT_CLOCK);                           // standard: every boot starts at 16 MHz
@@ -18,6 +19,8 @@ int main(void) {
 
 #if IS_LOCAL_TEST
     clock_cycle_test_run();                          // never returns
+#elif IS_CLOUD_TEST
+    cloud_cycle_test_run();                          // never returns
 #endif
 
     while (1) {}

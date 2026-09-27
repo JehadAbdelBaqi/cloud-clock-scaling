@@ -12,6 +12,7 @@
 #define PIN2  2   // PA2  = USART2_TX -> ST-LINK virtual COM port, UM1724 §6.8
 #define PIN9  9   // PA9  = USART1_TX -> Mini RX (Arduino D8), DS10314 Table 8 / UM1724 Table 16
 #define PIN10 10  // PA10 = USART1_RX <- Mini TX (Arduino D2), DS10314 Table 8 / UM1724 Table 16
+#define PIN0  0   // PA0  = ADC1_IN0 <- mic module signal (Arduino A0), UM1724 Table 16
 #define LED_PIN 5  // PA5 = LD2, User Manual UM1724 §7.6
 
 #endif

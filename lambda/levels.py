@@ -57,6 +57,6 @@ def parse_reading(event: dict) -> dict:
     }
 
 
-def build_command(seq: int, level: int, hold_s: int) -> dict:
-    """Command sent back down to the board."""
-    return {"seq": seq, "level": level, "hold_s": hold_s}
+def build_command(seq: int, level: int) -> dict:
+    """Command sent back down to the board. How long to hold is the board's call."""
+    return {"seq": seq, "level": level}

@@ -38,7 +38,6 @@ def _settings() -> dict:
         "med": int(os.environ.get("MED_THRESHOLD", "100")),
         "high": int(os.environ.get("HIGH_THRESHOLD", "300")),
         "max_level": int(os.environ.get("MAX_LEVEL", "1")),
-        "hold_s": int(os.environ.get("HOLD_SECONDS", "15")),
     }
 
 
@@ -57,7 +56,7 @@ def handler(event, context):
 
     command = None
     if level > LOW:
-        command = build_command(reading["seq"], level, cfg["hold_s"])
+        command = build_command(reading["seq"], level)
         topic = f"{cfg['topic_root']}/{reading['device_id']}/commands"
         _iot_client().publish(topic=topic, qos=1, payload=json.dumps(command))
 

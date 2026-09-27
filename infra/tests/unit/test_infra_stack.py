@@ -47,7 +47,6 @@ def test_lambda_runtime_and_env(template):
                 "Variables": assertions.Match.object_like(
                     {
                         "MAX_LEVEL": "1",
-                        "HOLD_SECONDS": "15",
                         "TOPIC_ROOT": "clockscale",
                         "IOT_ENDPOINT": ENDPOINT,
                     }

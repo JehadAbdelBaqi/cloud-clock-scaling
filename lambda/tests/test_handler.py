@@ -21,7 +21,6 @@ def iot(monkeypatch):
     monkeypatch.setenv("MED_THRESHOLD", "100")
     monkeypatch.setenv("HIGH_THRESHOLD", "300")
     monkeypatch.setenv("MAX_LEVEL", "2")
-    monkeypatch.setenv("HOLD_SECONDS", "15")
     return fake
 
 
@@ -43,7 +42,7 @@ def test_clap_publishes_command_to_device_topic(iot):
         {
             "topic": "clockscale/nucleo-01/commands",
             "qos": 1,
-            "payload": {"seq": 9, "level": 1, "hold_s": 15},
+            "payload": {"seq": 9, "level": 1},
         }
     ]
 

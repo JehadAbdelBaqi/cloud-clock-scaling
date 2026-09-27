@@ -7,8 +7,8 @@
 
 void test_uart_log_init(void) {
 #if TEST_UART_LOG
-    uart_init(UART_PC, clock_get_hz());                     // PC serial monitor, via ST-LINK
-    uart_puts(UART_PC, "clock cycle test: 16 MHz\r\n");
+    uart_init(UART_PC, clock_get_hz());               // PC serial monitor, via ST-LINK
+    uart_puts(UART_PC, "test start: 16 MHz\r\n");
 #endif
 }
 
@@ -24,5 +24,16 @@ void test_uart_log_after_switch(clock_speed_t speed) {
     uart_puts(UART_PC, speed == CLOCK_50MHZ ? "50 MHz\r\n" : "16 MHz\r\n");
 #else
     (void)speed;
+#endif
+}
+
+void test_uart_log_line(const char *prefix, const char *line) {
+#if TEST_UART_LOG
+    uart_puts(UART_PC, prefix);
+    uart_puts(UART_PC, line);
+    uart_puts(UART_PC, "\r\n");
+#else
+    (void)prefix;
+    (void)line;
 #endif
 }

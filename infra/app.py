@@ -42,7 +42,6 @@ settings = {
     "med_threshold": ctx_int("medThreshold", 100),
     "high_threshold": ctx_int("highThreshold", 300),
     "max_level": ctx_int("maxLevel", 1),
-    "hold_seconds": ctx_int("holdSeconds", 15),
 }
 
 ClockScaleStack(app, "ClockScaleStack", env=env, **settings)

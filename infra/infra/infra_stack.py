@@ -40,7 +40,6 @@ class ClockScaleStack(Stack):
         med_threshold: int = 100,
         high_threshold: int = 300,
         max_level: int = 1,
-        hold_seconds: int = 15,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -140,7 +139,6 @@ class ClockScaleStack(Stack):
                 "MED_THRESHOLD": str(med_threshold),
                 "HIGH_THRESHOLD": str(high_threshold),
                 "MAX_LEVEL": str(max_level),
-                "HOLD_SECONDS": str(hold_seconds),
             },
         )
 

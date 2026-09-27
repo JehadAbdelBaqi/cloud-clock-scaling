@@ -126,6 +126,5 @@ to `clockscale/#`.
 | `certificateArn` | — | Device cert ARN — the cert itself is made and kept outside this repo |
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
 | `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until 100 MHz is verified) |
-| `holdSeconds` | 15 | How long the board holds a raised clock |
 
 See [docs/protocol.md](docs/protocol.md) for the message formats.

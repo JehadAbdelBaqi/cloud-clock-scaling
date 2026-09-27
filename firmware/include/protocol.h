@@ -6,7 +6,7 @@
  *
  *   Board -> gateway   S,<seq>,<peak>\n          sound reading
  *                      A,<seq>,<mhz>\n           ack: clock switched
- *   Gateway -> board   C,<seq>,<level>,<hold_s>\n
+ *   Gateway -> board   C,<seq>,<level>\n
  */
 
 #include <stdint.h>
@@ -25,11 +25,10 @@ typedef enum {
 
 static const uint8_t clock_mhz[] = { 16u, 50u, 100u };
 
-/* Parsed C,<seq>,<level>,<hold_s> command */
+/* Parsed C,<seq>,<level> command — hold time is the board's (HOLD_S) */
 typedef struct {
     uint32_t      seq;
     clock_level_t level;
-    uint16_t      hold_s;
 } proto_command_t;
 
 #endif /* PROTOCOL_H */

@@ -32,5 +32,6 @@
 #define GPIOAEN  (1 << 0)   // RCC_AHB1ENR bit 0 — clock to GPIO port A
 #define USART2EN (1 << 17)  // RCC_APB1ENR bit 17 — clock to USART2
 #define USART1EN (1 << 4)   // RCC_APB2ENR bit 4 — clock to USART1
+#define ADC1EN   (1 << 8)   // RCC_APB2ENR bit 8 — clock to ADC1
 
 #endif
