@@ -3,7 +3,7 @@
 Resources
 ---------
 - IoT Thing + IoT policy (device identity / what it may publish+subscribe)
-- Optional cert attachments (cert is created outside CDK — see scripts/)
+- Optional cert attachments (cert is created outside CDK and this repo)
 - Lambda: picks a clock level from a sound reading, publishes the command,
   logs one JSON line per reading to its log group (the history)
 - IoT topic rule: readings topic -> Lambda

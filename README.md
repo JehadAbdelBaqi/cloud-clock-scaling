@@ -55,14 +55,30 @@ it always returns to its low-power state, even if the network is down.
 | Analog microphone module | Sound input — A0 (PA0), ADC1 |
 | **Wi-Fi bridge** (ESP32-S3 board) | The Nucleo has no Wi-Fi. A separate UART-to-MQTT bridge project, treated as a black box: the Nucleo sends and receives plain text lines over UART (USART1, D8/D2), the bridge passes them to and from AWS IoT Core |
 
+## Documentation
+
+| Doc | What's in it |
+|-----|--------------|
+| [firmware/README.md](firmware/README.md) | STM32 firmware — layout, drivers, settings, build/upload |
+| [lambda/README.md](lambda/README.md) | The cloud's decision logic |
+| [infra/README.md](infra/README.md) | AWS resources (CDK), settings, deploy |
+| [docs/protocol.md](docs/protocol.md) | Message formats: board ↔ bridge ↔ cloud |
+| [docs/decisions.md](docs/decisions.md) | Design decisions and why |
+| [docs/resources.md](docs/resources.md) | Hardware, ST datasheets/manuals, tech stack |
+| [docs/how-to/local-testing.md](docs/how-to/local-testing.md) | Running and checking the test programs |
+
 ## Repo layout
 
 ```
 firmware/     STM32 firmware (PlatformIO, bare-metal)
 lambda/       Clock-level decision logic
 infra/        AWS CDK app (IoT Core, Lambda)
-docs/         Message protocol, resources, how-to guides
+docs/         Message protocol, design decisions, resources, how-to guides
 ```
+
+Each part has its own README: [firmware](firmware/README.md) ·
+[lambda](lambda/README.md) · [infra](infra/README.md). Why things are built
+the way they are: [docs/decisions.md](docs/decisions.md).
 
 ## Roadmap
 
