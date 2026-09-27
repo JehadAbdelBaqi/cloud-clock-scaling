@@ -104,8 +104,8 @@ aws sso login
 aws iot describe-endpoint --endpoint-type iot:Data-ATS
 # put the address into infra/cdk.json -> "iotEndpoint"
 
-scripts/create-device-cert.sh        # creates certs/, prints the cert ARN
-# put the printed ARN into infra/cdk.json -> "certificateArn"
+# device cert is created by the UART-MQTT bridge project (the key lives there);
+# put its ARN into infra/cdk.json -> "certificateArn"
 
 cd infra
 cdk bootstrap                        # once per account/region
@@ -123,11 +123,9 @@ to `clockscale/#`.
 |-----|---------|---------|
 | `iotEndpoint` | — | This account's IoT data endpoint (`aws iot describe-endpoint --endpoint-type iot:Data-ATS`) |
 | `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID |
-| `certificateArn` | — | Device cert, from `scripts/create-device-cert.sh` |
+| `certificateArn` | — | Device cert ARN — the cert itself is made and kept outside this repo |
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
 | `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until 100 MHz is verified) |
 | `holdSeconds` | 15 | How long the board holds a raised clock |
-
-**Never commit device certificates or keys** — `certs/` is git-ignored.
 
 See [docs/protocol.md](docs/protocol.md) for the message formats.

@@ -9,6 +9,7 @@
 #define RCC_CFGR    (*(volatile uint32_t *)0x40023808)  // RM0383 §6.3.3, offset 0x08
 #define RCC_AHB1ENR (*(volatile uint32_t *)0x40023830)  // RM0383 §6.3.9, offset 0x30
 #define RCC_APB1ENR (*(volatile uint32_t *)0x40023840)  // RM0383 §6.3.11, offset 0x40
+#define RCC_APB2ENR (*(volatile uint32_t *)0x40023844)  // RM0383 §6.3.12, offset 0x44
 
 #define RCC_CR_PLLON  (1 << 24)  // turn the main PLL on
 #define RCC_CR_PLLRDY (1 << 25)  // read-only: PLL locked and ready
@@ -30,5 +31,6 @@
 
 #define GPIOAEN  (1 << 0)   // RCC_AHB1ENR bit 0 — clock to GPIO port A
 #define USART2EN (1 << 17)  // RCC_APB1ENR bit 17 — clock to USART2
+#define USART1EN (1 << 4)   // RCC_APB2ENR bit 4 — clock to USART1
 
 #endif
