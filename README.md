@@ -141,64 +141,115 @@ docs/         Message protocol, design decisions, resources, how-to guides
 
 **Nice to have:** a small LCD on the board showing the current clock speed.
 
-## Getting started
+## Running it yourself
 
-**Prerequisites:** [uv](https://docs.astral.sh/uv/), Node (for the CDK
-CLI), AWS CLI v2 with an SSO profile (`aws configure sso`),
-`npm install -g aws-cdk`.
+What you can do from this repo alone, and what each step adds:
 
-Python dependencies live in one `pyproject.toml` at the repo root, managed by
-uv — one venv for infra and Lambda. All commands below run from the
-**repo root** unless they say otherwise.
+| Goal | Needs |
+|------|-------|
+| Run the tests | Software only — no hardware, no AWS |
+| Build the firmware | + PlatformIO |
+| Clock-cycle test on the board | + a Nucleo-F411RE |
+| Deploy the cloud side | + an AWS account |
+| **Full loop** (loud noise → clock switch) | + a mic module and a **Wi-Fi bridge** (below) |
 
-### 1. Install + run the tests (no AWS needed)
+### Prerequisites
+
+**Software**
+
+- [uv](https://docs.astral.sh/uv/) — installs Python 3.12 and every Python
+  package from `uv.lock`
+- [VS Code](https://code.visualstudio.com/) +
+  [PlatformIO](https://platformio.org/install/ide?install=vscode) — builds and
+  flashes the firmware, serial monitor
+- For deploying only: [Node.js](https://nodejs.org/) + the AWS CDK CLI
+  (`npm install -g aws-cdk`), and the
+  [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+  logged in to your account (e.g. `aws configure sso`)
+
+**Hardware**
+
+- ST **Nucleo-F411RE** + USB cable — the on-board ST-LINK powers it, flashes
+  it and carries the PC log
+- **Analog microphone module** that runs on 3.3 V (analog output)
+- Jumper wires — see [Wiring](#wiring)
+- **A Wi-Fi bridge.** The Nucleo has no Wi-Fi, so a second board does all the
+  networking: it joins Wi-Fi, holds the device certificate, connects to AWS IoT
+  Core over MQTT/TLS, turns the Nucleo's `S,…` lines into readings and the
+  cloud's commands into `C,…` lines. **Its code isn't in this repo** — this
+  project only relies on its interface. What it must do, and the ESP32-S3
+  bridge used here: [docs/wifi-bridge.md](docs/wifi-bridge.md). Message
+  formats: [docs/protocol.md](docs/protocol.md).
+
+All commands run from the **repo root** unless they say otherwise.
+
+### 1. Tests (no hardware, no AWS)
 
 ```bash
 uv sync          # creates .venv, installs from uv.lock (PlatformIO excluded)
 uv run pytest    # CDK stack + Lambda tests
 ```
 
-### 2. Deploy to AWS
+### 2. Firmware on its own
 
-```bash
-export AWS_PROFILE=clockscale        # your SSO profile name
-aws sso login
-
-aws iot describe-endpoint --endpoint-type iot:Data-ATS
-# put the address into infra/cdk/cdk.json -> "iotEndpoint"
-
-# device cert is created by the UART-MQTT bridge project (the key lives there);
-# put its ARN into infra/cdk/cdk.json -> "certificateArn"
-
-cd infra/cdk
-cdk bootstrap                        # once per account/region
-cdk deploy ClockScaleStack          # from Git Bash: add --require-approval never
-```
-
-The Wi-Fi bridge connects to that same `iotEndpoint` address.
-
-Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
-to `clockscale/#`.
-
-### Settings (`infra/cdk/cdk.json` → `context`)
-
-| Key | Default | Meaning |
-|-----|---------|---------|
-| `iotEndpoint` | — | This account's IoT data endpoint (`aws iot describe-endpoint --endpoint-type iot:Data-ATS`) |
-| `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID |
-| `certificateArn` | — | Device cert ARN — the cert itself is made and kept outside this repo |
-| `medThreshold` | 100 | Loudness that gets a 50 MHz command *(to calibrate)* |
-| `maxLevel` | 1 | Highest level the cloud sends (1 = 50 MHz) |
-
-### 3. Firmware
-
-Open `firmware/` in VS Code with PlatformIO → **Build** / **Upload** (over the
-Nucleo's ST-LINK). What runs is picked in `firmware/include/config/app_config.h`:
+Open `firmware/` in VS Code → PlatformIO **Build**, then **Upload** (over the
+ST-LINK). What runs is picked in `firmware/include/config/app_config.h` — one
+at a time:
 
 | Setting | Runs |
 |---------|------|
-| `IS_LOCAL_TEST = 1` | Clock-cycle test — board alone, no cloud |
-| `IS_CLOUD_TEST = 1` | Mic → bridge → AWS → command → clock switch |
+| `IS_LOCAL_TEST = 1` | Clock-cycle test — board alone, no cloud: LD2 blinks slow at 16 MHz, fast at 50 MHz |
+| `IS_CLOUD_TEST = 1` | The full loop (step 4) |
 
-Only one at a time. Wiring: [above](#wiring). Test steps and expected output:
-[docs/how-to/local-testing.md](docs/how-to/local-testing.md).
+Test steps and expected output: [docs/how-to/local-testing.md](docs/how-to/local-testing.md).
+
+### 3. Deploy the cloud side
+
+```bash
+aws sso login                         # or however you log in to your account
+
+# 1. Your account's IoT endpoint -> infra/cdk/cdk.json "iotEndpoint"
+aws iot describe-endpoint --endpoint-type iot:Data-ATS
+
+# 2. A device certificate. The ARN it prints -> infra/cdk/cdk.json "certificateArn".
+#    The two key files are for the Wi-Fi bridge — keep them OUT of this repo.
+aws iot create-keys-and-certificate --set-as-active \
+  --certificate-pem-outfile device.pem.crt \
+  --private-key-outfile private.pem.key \
+  --query certificateArn --output text
+
+# 3. Deploy
+cd infra/cdk
+cdk bootstrap                         # once per account/region
+cdk deploy ClockScaleStack
+```
+
+The bridge needs four things from this step: the **endpoint**, the
+**certificate** and **private key** above, and
+[Amazon's root CA](https://www.amazontrust.com/repository/AmazonRootCA1.pem).
+
+Watch messages arrive: AWS console → IoT Core → **MQTT test client** →
+subscribe to `clockscale/#`.
+
+**Settings** (`infra/cdk/cdk.json` → `context`):
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `iotEndpoint` | — | This account's IoT data endpoint |
+| `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID (the bridge must connect with it) |
+| `certificateArn` | — | Device certificate ARN — not a secret; the key never goes in this repo |
+| `medThreshold` | 100 | Loudness that gets a 50 MHz command *(to calibrate)* |
+| `maxLevel` | 1 | Highest level the cloud sends (1 = 50 MHz) |
+
+More: [infra/cdk/README.md](infra/cdk/README.md).
+
+### 4. The full loop
+
+1. Wire the mic and the bridge to the Nucleo — [Wiring](#wiring).
+2. Bridge running and connected to IoT Core (step 3's endpoint, certificate,
+   key and root CA, plus your Wi-Fi).
+3. Firmware with `IS_CLOUD_TEST = 1`, uploaded.
+4. Make a loud noise near the mic: the Nucleo sends a reading, the command
+   comes back, LD2 blinks fast (50 MHz), then slow again after the hold time.
+   With the Nucleo's serial monitor open you'll see each line — expected
+   output in [docs/how-to/local-testing.md](docs/how-to/local-testing.md).

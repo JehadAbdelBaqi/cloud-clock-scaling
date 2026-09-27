@@ -45,7 +45,7 @@ From this folder, logged in to AWS (`aws sso login`):
 
 ```bash
 cdk bootstrap                        # once per account/region
-cdk deploy ClockScaleStack --require-approval never   # Git Bash has no prompt for approvals
+cdk deploy ClockScaleStack
 ```
 
 ## Tests
