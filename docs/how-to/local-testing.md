@@ -95,7 +95,7 @@ to finish (`uart_flush`), changes the clock, then recomputes `BRR`
 ## Cloud cycle test
 
 The full loop: mic → Nucleo → Wi-Fi bridge → AWS → command back → clock switch.
-Needs the bridge running and wired (see [protocol.md](../protocol.md)) and the
+Needs the bridge running and wired (see [Wiring](../../README.md#wiring)) and the
 stack deployed.
 
 | Setting | Value | Why |

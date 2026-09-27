@@ -94,5 +94,5 @@ Open this folder in VS Code with PlatformIO → **Build**, **Upload** (over the
 Nucleo's ST-LINK), plug icon for the serial monitor (COM4 — change
 `monitor_port` in `platformio.ini` if yours differs).
 
-Wiring and full test steps: [../docs/how-to/local-testing.md](../docs/how-to/local-testing.md).
+Wiring: [main README](../README.md#wiring). Test steps: [../docs/how-to/local-testing.md](../docs/how-to/local-testing.md).
 Message formats: [../docs/protocol.md](../docs/protocol.md).

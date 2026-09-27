@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/JehadAbdelBaqi/cloud-clock-scaling/actions/workflows/ci.yml/badge.svg)](https://github.com/JehadAbdelBaqi/cloud-clock-scaling/actions/workflows/ci.yml)
 
-This project is a cloud-driven **dynamic frequency scaling** for a bare-metal STM32F411
+Cloud-driven **dynamic frequency scaling** for a bare-metal STM32F411
 (Cortex-M4). The board samples sound through its ADC and reports the level
 over MQTT to AWS IoT Core; a Lambda decides the clock level and publishes a
 command back; the firmware switches SYSCLK at runtime between the internal
@@ -10,7 +10,8 @@ command back; the firmware switches SYSCLK at runtime between the internal
 UART baud rates on every switch — then returns to 16 MHz on its own after a
 hold time.
 
-> **Status: in progress.** See [Roadmap](#roadmap) for what works today.
+> **Status:** working end to end on real hardware. Next: measuring the
+> round-trip latency on an oscilloscope — see [Roadmap](#roadmap).
 
 ## How it works
 
@@ -50,7 +51,7 @@ speed it up only when there's work to do. This project drives that decision
 from the cloud, end to end:
 
 - **Embedded:** bare-metal STM32 (register-level, no HAL) — PLL
-  reconfiguration, flash wait-states, ADC, UART, timers
+  reconfiguration, flash wait-states, ADC, UART, SysTick
 - **IoT:** device ↔ cloud round trip over MQTT, X.509 device identity
 - **DevOps:** all AWS resources in CDK, unit-tested; GitHub Actions runs the
   tests and builds the firmware on pushes marked `[ci:run-tests]` (deploys are run by hand)
@@ -86,9 +87,23 @@ it always returns to its low-power state, even if the network is down.
 
 | Part | Role |
 |------|------|
-| ST **Nucleo-F411RE** (STM32F411RE, Cortex-M4F) | The device |
+| ST **Nucleo-F411RE** (STM32F411RE, Cortex-M4) | The device |
 | Analog microphone module | Sound input — A0 (PA0), ADC1 |
 | **Wi-Fi bridge** (ESP32-S3 board) | The Nucleo has no Wi-Fi. A separate UART-to-MQTT bridge project, treated as a black box: the Nucleo sends and receives plain text lines over UART (USART1, D8/D2), the bridge passes them to and from AWS IoT Core |
+
+### Wiring
+
+| From | To (Nucleo header) | Signal |
+|------|--------------------|--------|
+| Mic power | 3V3 | 3.3 V — not 5V, the ADC pin takes up to 3.3 V |
+| Mic GND | GND | Ground |
+| Mic analog out | A0 (PA0) | ADC1 channel 0 |
+| Bridge RX | D8 (PA9) | Nucleo USART1 TX |
+| Bridge TX | D2 (PA10) | Nucleo USART1 RX |
+| Bridge GND | GND | Common ground |
+
+UART: 115200 baud, 8N1, 3.3 V logic on both sides. The Nucleo's USB (ST-LINK)
+powers it, flashes it, and carries the PC log (USART2).
 
 ## Documentation
 
@@ -111,10 +126,6 @@ infra/
   decide-clock-lambda/  Lambda: clock-level decision logic
 docs/         Message protocol, design decisions, resources, how-to guides
 ```
-
-Each part has its own README: [firmware](firmware/README.md) ·
-[cdk](infra/cdk/README.md) · [decide-clock-lambda](infra/decide-clock-lambda/README.md). Why things are built
-the way they are: [docs/decisions.md](docs/decisions.md).
 
 ## Roadmap
 
@@ -142,8 +153,8 @@ uv — one venv for infra and Lambda. All commands below run from the
 ### 1. Install + run the tests (no AWS needed)
 
 ```bash
-uv sync          # creates .venv and installs everything from uv.lock
-uv run pytest    # infra and lambda tests
+uv sync          # creates .venv, installs from uv.lock (PlatformIO excluded)
+uv run pytest    # CDK stack + Lambda tests
 ```
 
 ### 2. Deploy to AWS
@@ -188,9 +199,5 @@ Nucleo's ST-LINK). What runs is picked in `firmware/include/config/app_config.h`
 | `IS_LOCAL_TEST = 1` | Clock-cycle test — board alone, no cloud |
 | `IS_CLOUD_TEST = 1` | Mic → bridge → AWS → command → clock switch |
 
-Only one at a time. Wiring and pins: [docs/resources.md](docs/resources.md) and
-[docs/protocol.md](docs/protocol.md).
-
-See [docs/protocol.md](docs/protocol.md) for the message formats,
-[docs/resources.md](docs/resources.md) for the hardware, datasheets and tech stack,
-and [docs/how-to/local-testing.md](docs/how-to/local-testing.md) for testing on the board alone.
+Only one at a time. Wiring: [above](#wiring). Test steps and expected output:
+[docs/how-to/local-testing.md](docs/how-to/local-testing.md).
