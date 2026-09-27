@@ -1,8 +1,8 @@
 #include <stdint.h>
 
-#include "uart.h"
-#include "uart_config.h"
-#include "app_config.h"
+#include "drivers/uart.h"
+#include "config/uart_config.h"
+#include "config/app_config.h"
 #include "regs/gpio.h"
 #include "regs/rcc.h"
 #include "regs/usart.h"

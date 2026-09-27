@@ -37,7 +37,7 @@ Stack outputs: thing name, policy name, topics, Lambda name, log group name.
 | `deviceId` | `nucleo-01` | Thing name + MQTT client ID |
 | `certificateArn` | — | Device certificate ARN (not a secret — the key never comes near this repo) |
 | `medThreshold` / `highThreshold` | 100 / 300 | Loudness for MED (50 MHz) / HIGH (100 MHz) |
-| `maxLevel` | 1 | Highest level the cloud sends — 1 until 100 MHz works on the board |
+| `maxLevel` | 1 | Highest level the cloud sends — 1 until the firmware has a 100 MHz setting |
 
 ## Deploy
 

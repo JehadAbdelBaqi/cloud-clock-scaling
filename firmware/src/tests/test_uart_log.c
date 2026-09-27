@@ -1,8 +1,8 @@
 #include "tests/test_uart_log.h"
-#include "app_config.h"
-#include "clock.h"
+#include "config/app_config.h"
+#include "drivers/clock.h"
 #if TEST_UART_LOG
-#include "uart.h"
+#include "drivers/uart.h"
 #endif
 
 void test_uart_log_init(void) {

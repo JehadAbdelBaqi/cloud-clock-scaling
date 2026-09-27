@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "mic.h"
-#include "app_config.h"
+#include "drivers/mic.h"
+#include "config/app_config.h"
 #include "regs/adc.h"
 #include "regs/gpio.h"
 #include "regs/rcc.h"

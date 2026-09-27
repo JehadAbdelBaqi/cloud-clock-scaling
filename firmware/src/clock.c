@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "clock.h"
-#include "clock_config.h"
+#include "drivers/clock.h"
+#include "config/clock_config.h"
 #include "regs/flash.h"
 #include "regs/rcc.h"
 

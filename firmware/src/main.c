@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "app_config.h"
-#include "clock.h"
+#include "config/app_config.h"
+#include "drivers/clock.h"
 #include "regs/gpio.h"
 #include "regs/rcc.h"
 #include "regs/systick.h"

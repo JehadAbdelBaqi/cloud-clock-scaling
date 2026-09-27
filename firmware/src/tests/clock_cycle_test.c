@@ -1,7 +1,7 @@
 #include "tests/clock_cycle_test.h"
 
-#include "app_config.h"
-#include "clock.h"
+#include "config/app_config.h"
+#include "drivers/clock.h"
 #include "regs/systick.h"
 #include "tests/test_led.h"
 #include "tests/test_uart_log.h"

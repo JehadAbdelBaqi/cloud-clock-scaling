@@ -6,7 +6,7 @@
 #include "regs/gpio.h"
 #include "regs/rcc.h"
 #include "regs/usart.h"
-#include "uart.h"
+#include "drivers/uart.h"
 
 // Settings for each UART port — used by uart.c. All pins are on port A, AF7.
 typedef struct {

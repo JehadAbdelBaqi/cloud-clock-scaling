@@ -2,10 +2,10 @@
 
 #include <stdint.h>
 
-#include "app_config.h"
-#include "clock.h"
-#include "mic.h"
-#include "uart.h"
+#include "config/app_config.h"
+#include "drivers/clock.h"
+#include "drivers/mic.h"
+#include "drivers/uart.h"
 #include "regs/systick.h"
 #include "tests/test_led.h"
 #include "tests/test_uart_log.h"
@@ -145,7 +145,7 @@ void cloud_cycle_test_run(void) {
 
             uint32_t cseq, level;
             if (parse_command(line, &cseq, &level) && level > 0) {
-                // Level 1+ = 50 MHz (100 MHz isn't supported yet)
+                // Level 1+ = 50 MHz (no 100 MHz setting in the firmware yet)
                 if (speed != CLOCK_50MHZ) {
                     speed = CLOCK_50MHZ;
                     switch_to(speed);

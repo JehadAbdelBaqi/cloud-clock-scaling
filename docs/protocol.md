@@ -9,10 +9,10 @@ Lambda (`lambda/levels.py`) must all agree with this file — change it here fir
 |-------|------|--------|--------|
 | 0 | LOW | 16 MHz | HSI |
 | 1 | MED | 50 MHz | PLL |
-| 2 | HIGH | 100 MHz | PLL *(not supported on the board yet)* |
+| 2 | HIGH | 100 MHz | PLL — chip max *(not in the firmware yet)* |
 
 `maxLevel` in `infra/cdk.json` caps what the cloud will send — keep it at 1
-until 100 MHz is verified on the board.
+until the firmware has a 100 MHz setting.
 
 ## UART (board ↔ bridge)
 
@@ -53,7 +53,7 @@ arrived) — the Lambda accepts it but the bridge doesn't send it yet.
   most once per SysTick countdown, so a long noise can't flood the cloud.
   Keep `MIC_CLAP_LEVEL` equal to the cloud's `medThreshold`.
 - On `C`: switch, reply `A`, start (or restart) the hold timer. The hold time
-  is the board's own setting (`HOLD_S` in `firmware/include/app_config.h`) —
+  is the board's own setting (`HOLD_S` in `firmware/include/config/app_config.h`) —
   the cloud only says *speed up*.
 - Hold timer expiry → switch to LOW, send `A` with `mhz` = 16 and the last
   `seq`.

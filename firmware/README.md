@@ -12,15 +12,17 @@ dropping back to 16 MHz on its own after a hold time.
 ```
 firmware/
 ├── platformio.ini        Build/upload config (ST platform pinned to a commit)
-├── include/
-│   ├── app_config.h      ALL app settings — what runs, timings, levels
-│   ├── clock.h           Clock API: clock_set(), clock_get_hz()
-│   ├── clock_config.h    Per-speed table: PLL M/N/P, flash wait-states
-│   ├── uart.h            UART API (any port): init, send, receive
-│   ├── uart_config.h     Per-port table: USART, clock enable, pins
-│   ├── mic.h             Mic API: init, peak-to-peak loudness
+├── include/              Headers only — the code itself is in src/
+│   ├── config/           Settings + config tables
+│   │   ├── app_config.h    ALL app settings — what runs, timings, levels
+│   │   ├── clock_config.h  Per-speed table: PLL M/N/P, flash wait-states
+│   │   └── uart_config.h   Per-port table: USART, clock enable, pins
+│   ├── drivers/          API headers — the functions each driver offers
+│   │   ├── clock.h         clock_set(), clock_get_hz()
+│   │   ├── uart.h          UART (any port): init, send, receive
+│   │   └── mic.h           init, peak-to-peak loudness
 │   ├── regs/             Register addresses + bit names, one file per peripheral
-│   └── tests/            Test entry points (headers)
+│   └── tests/            Test entry points
 └── src/
     ├── main.c            Boot: 16 MHz, LED, SysTick, then hands over to a test
     ├── clock.c           Clock switching (HSI <-> PLL, wait-states)
@@ -51,7 +53,7 @@ comes from in ST's documents (see [../docs/resources.md](../docs/resources.md)).
 | `uart.c` | `uart_init / puts / getc / flush / set_clock` per port | Polled. Baud divider is worked out from the CPU clock, so call `uart_set_clock()` after every clock switch |
 | `mic.c` | `mic_poll()` → loudness each window | One ADC reading per call; loudness = max − min over `MIC_WINDOW_SAMPLES` |
 
-UART ports (`uart_config.h`):
+UART ports (`config/uart_config.h`):
 
 | Port | USART | Pins | Used for |
 |------|-------|------|----------|
@@ -61,7 +63,7 @@ UART ports (`uart_config.h`):
 ### `src/tests/` — what runs
 
 `main.c` boots the board, then hands over to the test picked in
-`app_config.h`. Set **one** to `1`:
+`config/app_config.h`. Set **one** to `1`:
 
 | Setting | Program | Needs |
 |---------|---------|-------|
@@ -71,7 +73,7 @@ UART ports (`uart_config.h`):
 Shared helpers: `test_led.c` (LED blink that speeds up with the clock) and
 `test_uart_log.c` (PC logging, `TEST_UART_LOG`).
 
-## Settings — `include/app_config.h`
+## Settings — `include/config/app_config.h`
 
 | Setting | Default | Meaning |
 |---------|---------|---------|

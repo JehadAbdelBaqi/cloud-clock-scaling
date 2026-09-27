@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #include "tests/test_led.h"
-#include "app_config.h"
+#include "config/app_config.h"
 #include "regs/gpio.h"
 
 void test_led_loop(void) {

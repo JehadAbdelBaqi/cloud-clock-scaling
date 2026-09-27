@@ -1,7 +1,7 @@
 #ifndef TESTS_TEST_UART_LOG_H
 #define TESTS_TEST_UART_LOG_H
 
-#include "clock.h"
+#include "drivers/clock.h"
 
 // PC serial logging for the tests. Does nothing unless TEST_UART_LOG = 1.
 

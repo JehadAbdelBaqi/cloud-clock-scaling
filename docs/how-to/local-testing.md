@@ -1,7 +1,7 @@
 # Local Testing
 
 How to check the firmware's clock switching. Each test type is a build-time
-switch in `firmware/include/app_config.h` — set **one** of them to `1`.
+switch in `firmware/include/config/app_config.h` — set **one** of them to `1`.
 
 ## How it works
 

@@ -41,7 +41,7 @@ from the cloud, end to end:
 |-------------|--------|--------|
 | LOW | 16 MHz | HSI (internal oscillator) |
 | MED | 50 MHz | PLL |
-| HIGH | 100 MHz | PLL (chip max) — *planned* |
+| HIGH | 100 MHz | PLL (chip max) — *not in the firmware yet* |
 
 **Edge vs cloud split:** the cloud decides when to speed up; the board is
 responsible for dropping back to low speed on its own after a hold time — so
@@ -141,12 +141,12 @@ to `clockscale/#`.
 | `deviceId` | `nucleo-01` | IoT thing name + MQTT client ID |
 | `certificateArn` | — | Device cert ARN — the cert itself is made and kept outside this repo |
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
-| `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until 100 MHz is verified) |
+| `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until the firmware has a 100 MHz setting) |
 
 ### 3. Firmware
 
 Open `firmware/` in VS Code with PlatformIO → **Build** / **Upload** (over the
-Nucleo's ST-LINK). What runs is picked in `firmware/include/app_config.h`:
+Nucleo's ST-LINK). What runs is picked in `firmware/include/config/app_config.h`:
 
 | Setting | Runs |
 |---------|------|

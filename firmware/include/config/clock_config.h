@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "clock.h"
+#include "drivers/clock.h"
 
 // Settings for each clock speed — used by clock_set() in clock.c.
 // PLL maths: HSI 16 MHz / M * N / P.

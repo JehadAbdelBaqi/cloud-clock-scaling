@@ -24,7 +24,7 @@ The main choices behind the build, and why. Newest last.
 | 18 | **Loudness = peak-to-peak over a short window** | Size of the sound wave; a short window catches a clap's peak | Single samples / averages |
 | 19 | **Readings every 30 s + straight away on a clap** | Every reading runs the Lambda; constant readings were wasted runs and log lines. Claps are the only readings that change anything | A reading every few seconds |
 | 20 | **The cloud decides *speed up*; the board owns *how long* and *slowing down*** | The board still returns to low power if the network or cloud is down; the hold time is the device's behaviour, not the cloud's | Cloud sending the hold time and a "slow down" command |
-| 21 | **Cloud capped at 50 MHz** (`maxLevel = 1`) | 100 MHz isn't built and verified on the board yet | Allowing 100 MHz commands |
+| 21 | **Cloud capped at 50 MHz** (`maxLevel = 1`) | The chip can do 100 MHz, but the firmware has no 100 MHz setting yet | Allowing 100 MHz commands |
 
 ## Related
 
