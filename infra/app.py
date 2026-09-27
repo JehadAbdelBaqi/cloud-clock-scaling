@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 """CDK entry point.
 
-Settings come from the "context" block in cdk.json (so the pipeline's synth
-sees the same values as a local `cdk synth`). Override one-off with
+Settings come from the "context" block in cdk.json. Override one-off with
 `cdk synth -c key=value`.
 
 Stacks
 ------
-ClockScaleStack          - the app itself; deploy directly with `cdk deploy ClockScaleStack`
-ClockScalePipelineStack  - only created once `connectionArn` is set; after the
-                           first `cdk deploy ClockScalePipelineStack`, pushes to
-                           GitHub deploy everything
+ClockScaleStack  - the app itself; deploy with `cdk deploy ClockScaleStack`
 """
 import os
 
 import aws_cdk as cdk
 
 from infra.infra_stack import ClockScaleStack
-from infra.pipeline_stack import PipelineStack
 
 app = cdk.App()
 ctx = app.node.try_get_context
@@ -43,18 +38,5 @@ settings = {
 }
 
 ClockScaleStack(app, "ClockScaleStack", env=env, **settings)
-
-connection_arn = ctx("connectionArn")
-if connection_arn:
-    PipelineStack(
-        app,
-        "ClockScalePipelineStack",
-        github_repo=ctx("githubRepo"),
-        github_branch=ctx("githubBranch") or "master",
-        connection_arn=connection_arn,
-        settings=settings,
-        build_firmware=bool(ctx("buildFirmware")),
-        env=env,
-    )
 
 app.synth()

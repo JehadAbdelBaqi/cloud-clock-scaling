@@ -16,8 +16,8 @@ from the cloud, end to end:
 - **Embedded:** bare-metal STM32 (register-level, no HAL) — PLL
   reconfiguration, flash wait-states, ADC, UART, timers
 - **IoT:** device ↔ cloud round trip over MQTT, X.509 device identity
-- **DevOps:** all AWS resources in CDK, deployed through CodePipeline +
-  CodeBuild, with the firmware built in CI too
+- **DevOps:** all AWS resources in CDK, deployed through GitHub Actions,
+  with the firmware built in CI too
 
 ## Architecture
 
@@ -63,7 +63,7 @@ it always returns to its low-power state, even if the network is down.
 firmware/     STM32 firmware (PlatformIO, bare-metal)
 gateway/      Serial ↔ MQTT bridge (Python)
 lambda/       Clock-level decision logic
-infra/        AWS CDK app (IoT Core, Lambda, pipeline)
+infra/        AWS CDK app (IoT Core, Lambda)
 docs/         Diagrams, wiring, scope captures
 ```
 
@@ -76,7 +76,7 @@ docs/         Diagrams, wiring, scope captures
 - [ ] Gateway publishing readings to IoT Core
 - [ ] Full round trip: Lambda → command → board switches clock
 - [ ] Hold-timer decay back to low speed
-- [ ] CodePipeline + CodeBuild (tests, `cdk synth`, firmware build, deploy)
+- [ ] GitHub Actions (tests, `cdk synth`, firmware build, deploy)
 - [ ] End-to-end latency measured on an oscilloscope
 - [ ] Replace the PC gateway with an ESP32-S3 Wi-Fi module (ESP-AT)
 
@@ -132,18 +132,6 @@ uv run python gateway/gateway.py --port COM5 --endpoint <IotEndpoint>  # real bo
 Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
 to `clockscale/#`.
 
-### 5. Pipeline (optional)
-
-Create a GitHub connection in the console (Developer Tools → Settings →
-Connections), fill `githubRepo` (`owner/repo`) and `connectionArn` in
-`infra/cdk.json`, then once:
-
-```bash
-cdk deploy ClockScalePipelineStack
-```
-
-After that, every push to `master` tests, synths and deploys.
-
 ### Settings (`infra/cdk.json` → `context`)
 
 | Key | Default | Meaning |
@@ -153,7 +141,6 @@ After that, every push to `master` tests, synths and deploys.
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
 | `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until 100 MHz is verified) |
 | `holdSeconds` | 15 | How long the board holds a raised clock |
-| `buildFirmware` | false | Add the firmware build step to the pipeline |
 
 **Never commit device certificates or keys** — `certs/` is git-ignored.
 
