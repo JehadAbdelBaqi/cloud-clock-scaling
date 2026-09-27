@@ -53,7 +53,7 @@
 #define TEST_UART_LOG 1
 
 // Baud for both UARTs. PC: must match monitor_speed in platformio.ini.
-// Bridge: must match the Genesis Mini's Serial1 baud.
+// Bridge: must match the Wi-Fi bridge's UART baud.
 #define UART_BAUD 115200
 
 #endif

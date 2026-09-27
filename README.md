@@ -16,25 +16,24 @@ from the cloud, end to end:
 - **Embedded:** bare-metal STM32 (register-level, no HAL) — PLL
   reconfiguration, flash wait-states, ADC, UART, timers
 - **IoT:** device ↔ cloud round trip over MQTT, X.509 device identity
-- **DevOps:** all AWS resources in CDK, deployed through GitHub Actions,
-  with the firmware built in CI too
+- **DevOps:** all AWS resources in CDK, unit-tested *(GitHub Actions
+  pipeline + firmware build in CI: planned)*
 
 ## Architecture
 
 ```
-  CLAP                                         AWS
-   │                                 ┌───────────────────────────────┐
-   ▼                                 │                               │
- [Analog mic]                        │  IoT Core ── Rule ──► Lambda  │
-   │ ADC                             │   ▲                     │     │
-   ▼                                 │   │ readings            │     │
- [STM32 Nucleo-F411RE]   UART        │   │                     ▼     │
-   sample → peak ──────► [ESP32-S3] ─MQTT┘          picks clock level│
-   │                          ▲      │                         │     │
-   │                          └─MQTT─┼── IoT Core ◄── command ─┘     │
-   ▼                                 │                               │
- reconfigure PLL                     │  CloudWatch Logs (history)    │
- SYSCLK 16 / 50 / 100 MHz            └───────────────────────────────┘
+  CLAP                                               AWS
+   │                                       ┌───────────────────────────────┐
+   ▼                                       │                               │
+ [Analog mic]                              │  IoT Core ── Rule ──► Lambda  │
+   │ ADC                                   │   ▲                     │     │
+   ▼                                       │   │ readings            │     │
+ [STM32 Nucleo-F411RE]  UART   [Wi-Fi  ]   │   │                     ▼     │
+   sample → peak ─────────────►[bridge ]─MQTT──┘          picks clock level│
+   │                  ◄────────[       ]◄MQTT─── IoT Core ◄── command ─┘   │
+   ▼                  command              │                               │
+ reconfigure PLL                           │  CloudWatch Logs (history)    │
+ SYSCLK 16 / 50 MHz                        └───────────────────────────────┘
  hold timer → back to 16 MHz when quiet
 ```
 
@@ -42,7 +41,7 @@ from the cloud, end to end:
 |-------------|--------|--------|
 | LOW | 16 MHz | HSI (internal oscillator) |
 | MED | 50 MHz | PLL |
-| HIGH | 100 MHz | PLL (chip max) |
+| HIGH | 100 MHz | PLL (chip max) — *planned* |
 
 **Edge vs cloud split:** the cloud decides when to speed up; the board is
 responsible for dropping back to low speed on its own after a hold time — so
@@ -53,8 +52,8 @@ it always returns to its low-power state, even if the network is down.
 | Part | Role |
 |------|------|
 | ST **Nucleo-F411RE** (STM32F411RE, Cortex-M4F) | The device |
-| Analog microphone module | Sound input (ADC) |
-| **ESP32-S3** (Axiometa Genesis Mini) running ESP-AT | Wi-Fi co-processor — the Nucleo drives it with AT commands over UART (the Nucleo has no Wi-Fi) |
+| Analog microphone module | Sound input — A0 (PA0), ADC1 |
+| **Wi-Fi bridge** (ESP32-S3 board) | The Nucleo has no Wi-Fi. A separate UART-to-MQTT bridge project, treated as a black box: the Nucleo sends and receives plain text lines over UART (USART1, D8/D2), the bridge passes them to and from AWS IoT Core |
 
 ## Repo layout
 
@@ -62,17 +61,18 @@ it always returns to its low-power state, even if the network is down.
 firmware/     STM32 firmware (PlatformIO, bare-metal)
 lambda/       Clock-level decision logic
 infra/        AWS CDK app (IoT Core, Lambda)
-docs/         Diagrams, wiring, scope captures
+docs/         Message protocol, resources, how-to guides
 ```
 
 ## Roadmap
 
-- [ ] Clock switcher on the board (16 ↔ 50 MHz, then 100 MHz)
-- [ ] Mic → ADC → clap detection
-- [ ] AWS infra in CDK (IoT thing/policy/rule, Lambda, log group)
-- [ ] ESP32-S3 (ESP-AT) publishing readings to IoT Core
-- [ ] Full round trip: Lambda → command → board switches clock
-- [ ] Hold-timer decay back to low speed
+- [x] Clock switcher on the board (16 ↔ 50 MHz)
+- [ ] 100 MHz level
+- [x] AWS infra in CDK (IoT thing/policy/rule, Lambda, log group)
+- [x] Wi-Fi bridge publishing readings to IoT Core
+- [x] Full round trip: Lambda → command → board switches clock
+- [x] Hold timer on the board → back to low speed
+- [ ] Mic → ADC → clap detection *(built, being tested + calibrated)*
 - [ ] GitHub Actions (tests, `cdk synth`, firmware build, deploy)
 - [ ] End-to-end latency measured on an oscilloscope
 
@@ -109,10 +109,10 @@ aws iot describe-endpoint --endpoint-type iot:Data-ATS
 
 cd infra
 cdk bootstrap                        # once per account/region
-cdk deploy ClockScaleStack
+cdk deploy ClockScaleStack          # from Git Bash: add --require-approval never
 ```
 
-The ESP32-S3 connects to that same `iotEndpoint` address.
+The Wi-Fi bridge connects to that same `iotEndpoint` address.
 
 Watch it arrive: AWS console → IoT Core → **MQTT test client** → subscribe
 to `clockscale/#`.
@@ -127,4 +127,19 @@ to `clockscale/#`.
 | `medThreshold` / `highThreshold` | 100 / 300 | Peak level for MED / HIGH *(to calibrate)* |
 | `maxLevel` | 1 | Highest level the cloud will send (keep at 1 until 100 MHz is verified) |
 
-See [docs/protocol.md](docs/protocol.md) for the message formats.
+### 3. Firmware
+
+Open `firmware/` in VS Code with PlatformIO → **Build** / **Upload** (over the
+Nucleo's ST-LINK). What runs is picked in `firmware/include/app_config.h`:
+
+| Setting | Runs |
+|---------|------|
+| `IS_LOCAL_TEST = 1` | Clock-cycle test — board alone, no cloud |
+| `IS_CLOUD_TEST = 1` | Mic → bridge → AWS → command → clock switch |
+
+Only one at a time. Wiring and pins: [docs/resources.md](docs/resources.md) and
+[docs/protocol.md](docs/protocol.md).
+
+See [docs/protocol.md](docs/protocol.md) for the message formats,
+[docs/resources.md](docs/resources.md) for the hardware, datasheets and tech stack,
+and [docs/how-to/local-testing.md](docs/how-to/local-testing.md) for testing on the board alone.
